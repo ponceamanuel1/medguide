@@ -1,0 +1,3151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedGuide</title>
+    <style>
+        /* Reset & Base */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #1f2937;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: #fff;
+            padding: 1rem 1.5rem;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 700; }
+        .language-selector {
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .language-selector option { color: #1e3a8a; }
+        .subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            border: none;
+            background: #fff;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #64748b;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .tab-btn:hover { background: #f1f5f9; }
+        .tab-btn.active { background: #1e3a8a; color: #fff; }
+        .tab-btn svg { width: 18px; height: 18px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Split Layout */
+        .split-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+            height: calc(100vh - 220px);
+            min-height: 500px;
+        }
+        @media (max-width: 900px) {
+            .split-container { grid-template-columns: 1fr; height: auto; }
+            .context-panel { max-height: 350px; }
+        }
+
+        /* Context Panel */
+        .context-panel {
+            background: #fff;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .context-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: #fff;
+            padding: 1rem;
+        }
+        .context-header h3 { margin: 0 0 0.25rem; font-size: 1rem; }
+        .context-header p { margin: 0; font-size: 0.8rem; opacity: 0.9; }
+        .context-body {
+            padding: 1rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .context-body .form-group { margin-bottom: 1rem; }
+        .context-body label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.35rem;
+            display: block;
+        }
+        .context-body textarea,
+        .context-body input,
+        .context-body select {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+        .context-body textarea { resize: none; }
+        .context-body textarea:focus,
+        .context-body input:focus,
+        .context-body select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+        }
+        .context-status {
+            padding: 0.75rem 1rem;
+            background: #fefce8;
+            border-top: 1px solid #fef08a;
+            font-size: 0.8rem;
+            color: #854d0e;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .context-status.active {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #eab308;
+        }
+        .context-status.active .status-dot { background: #22c55e; }
+
+        /* Profile Banner */
+        .profile-banner {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .profile-banner-text { font-size: 0.85rem; color: #1e40af; }
+        .profile-banner-btn {
+            background: #1e3a8a;
+            color: #fff;
+            border: none;
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .profile-banner-btn:hover { background: #1e40af; }
+
+        /* Chat Panel */
+        .chat-panel {
+            background: #fff;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem;
+        }
+        .chat-header h3 { margin: 0; font-size: 1rem; color: #1e3a8a; }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .chat-welcome {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #6b7280;
+            margin: auto;
+        }
+        .chat-welcome svg {
+            width: 48px;
+            height: 48px;
+            stroke: #93c5fd;
+            margin-bottom: 1rem;
+        }
+        .chat-welcome h4 {
+            color: #1e3a8a;
+            margin: 0 0 0.5rem;
+            font-size: 1.1rem;
+        }
+        .chat-welcome p { margin: 0 0 1.5rem; font-size: 0.9rem; }
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        .suggestion-chip {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .suggestion-chip:hover { background: #dbeafe; }
+
+        /* Messages */
+        .message { max-width: 85%; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user { align-self: flex-end; }
+        .message.assistant { align-self: flex-start; }
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            border-bottom-right-radius: 0.25rem;
+        }
+        .message.assistant .message-bubble {
+            background: #f3f4f6;
+            color: #1f2937;
+            border-bottom-left-radius: 0.25rem;
+        }
+        .message.assistant .message-bubble.crisis {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+        }
+        .message-time {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+            padding: 0 0.5rem;
+        }
+        .message.user .message-time { text-align: right; }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 0.75rem 1rem;
+            background: #f3f4f6;
+            border-radius: 1rem;
+            width: fit-content;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Chat Input */
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+            background: #f8fafc;
+        }
+        .chat-input-wrapper { display: flex; gap: 0.5rem; }
+        .chat-input-wrapper input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 1.5rem;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        .chat-input-wrapper input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .chat-send-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .chat-send-btn:hover { transform: scale(1.05); }
+        .chat-send-btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .chat-send-btn svg { width: 20px; height: 20px; }
+        .chat-disclaimer {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Cards */
+        .card {
+            background: #fff;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .card h2 {
+            color: #1e3a8a;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
+            font-family: inherit;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .btn-secondary:hover { background: #e5e7eb; }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-zone:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .upload-zone.has-file {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .upload-zone svg {
+            width: 48px;
+            height: 48px;
+            stroke: #9ca3af;
+            margin-bottom: 1rem;
+        }
+        .upload-zone input { display: none; }
+
+        /* Privacy & Disclaimer */
+        .privacy-notice {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: #166534;
+        }
+        .disclaimer-box {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .disclaimer-box h4 {
+            color: #92400e;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .disclaimer-box p {
+            color: #78350f;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        /* Analysis Results */
+        .analysis-section {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 0.75rem;
+        }
+        .analysis-section h3 {
+            color: #1e3a8a;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Emergency Banner */
+        .emergency-banner {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .emergency-banner p {
+            color: #991b1b;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Hospital Cards */
+        .hospital-card {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .hospital-card.emergency { border-left: 4px solid #dc2626; }
+        .hospital-name {
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 0.25rem;
+        }
+        .emergency-badge {
+            background: #dc2626;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+        }
+        .hospital-info {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+        .hospital-distance {
+            font-size: 0.85rem;
+            color: #3b82f6;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .hospital-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .hospital-actions a {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.375rem;
+            text-decoration: none;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #374151;
+        }
+        .hospital-actions a:hover { background: #f3f4f6; }
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+
+        /* Location Input */
+        .location-input-group { display: flex; gap: 0.5rem; }
+        .location-input-group input { flex: 1; }
+        .btn-location {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .btn-location:hover { background: #dbeafe; }
+        .btn-location:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        /* Splash Screen */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6, #60a5fa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        .splash-screen.fade-out { opacity: 0; visibility: hidden; }
+        .splash-content { text-align: center; color: #fff; }
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px 10px rgba(255,255,255,0.2); }
+        }
+        .splash-title { font-size: 2.5rem; font-weight: 700; margin: 0 0 0.5rem; }
+        .splash-subtitle { font-size: 1.1rem; opacity: 0.9; margin: 0 0 2rem; }
+        .splash-loader { display: flex; justify-content: center; gap: 8px; }
+        .loader-dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+        .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.6); }
+            40% { transform: scale(1); }
+        }
+
+        /* Onboarding */
+        .onboarding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        .onboarding-overlay.hidden { opacity: 0; pointer-events: none; }
+        .onboarding-modal {
+            background: #fff;
+            border-radius: 1rem;
+            max-width: 520px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        .onboarding-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            transition: width 0.3s;
+            width: 0%;
+        }
+        .step-indicator {
+            font-size: 0.85rem;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+        .onboarding-step { padding: 1.5rem; display: none; }
+        .onboarding-step.active { display: block; }
+        .onboarding-step h2 {
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+            font-size: 1.4rem;
+        }
+        .onboarding-step > p {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        .welcome-icon { text-align: center; margin-bottom: 1rem; }
+        .onboarding-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            justify-content: flex-end;
+        }
+        .btn-skip {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            font-family: inherit;
+        }
+        .btn-skip:hover { color: #374151; text-decoration: underline; }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        @media (max-width: 500px) {
+            .checkbox-group { grid-template-columns: 1fr; }
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 0.75rem;
+            background: #f8fafc;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        .checkbox-item:hover { background: #eff6ff; border-color: #bfdbfe; }
+        .checkbox-item input {
+            width: 18px;
+            height: 18px;
+            accent-color: #3b82f6;
+            margin: 0;
+            flex-shrink: 0;
+        }
+        .checkbox-item span {
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+            </div>
+            <h1 class="splash-title">MedGuide</h1>
+            <p class="splash-subtitle" id="splashSubtitle">Your Health Understanding Assistant</p>
+            <div class="splash-loader">
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+                <div class="loader-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Wizard -->
+    <div class="onboarding-overlay hidden" id="onboardingOverlay">
+        <div class="onboarding-modal">
+            <div class="onboarding-header">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                <span class="step-indicator" id="stepIndicator"></span>
+            </div>
+            
+            <!-- Welcome -->
+            <div class="onboarding-step active" id="step0">
+                <div style="text-align:right;margin-bottom:0.5rem;">
+                    <button onclick="closeOnboarding()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#9ca3af;padding:0.25rem;" title="Close">&times;</button>
+                </div>
+                <div class="welcome-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                </div>
+                <h2 id="onbWelcomeTitle">Welcome to MedGuide</h2>
+                <p id="onbWelcomeDesc">Get personalized health guidance tailored to your unique background, lifestyle, and health priorities.</p>
+                <p style="font-size:0.85rem;color:#6b7280;margin-top:1rem" id="onbTime">Takes about 3-5 minutes</p>
+                <div class="onboarding-actions" style="flex-direction:column;align-items:stretch;">
+                    <button class="btn-primary" onclick="nextStep()" id="onbStartBtn">Get Started</button>
+                    <button class="btn-skip" onclick="closeOnboarding()" id="onbSkipBtn">Skip for now</button>
+                </div>
+            </div>
+            
+            <!-- Step 1 -->
+            <div class="onboarding-step" id="step1">
+                <h2 id="onbStep1Title">About You</h2>
+                <p id="onbStep1Desc">Help us understand your background for more relevant guidance.</p>
+                <div class="form-group">
+                    <label id="onbAgeLabel">Age Range</label>
+                    <select id="profileAge">
+                        <option value="" id="optSelect">Select...</option>
+                        <option value="18-30">18-30</option>
+                        <option value="31-40">31-40</option>
+                        <option value="41-50">41-50</option>
+                        <option value="51-60">51-60</option>
+                        <option value="61-70">61-70</option>
+                        <option value="71+">71+</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="onbGenderLabel">Biological Sex</label>
+                    <select id="profileGender">
+                        <option value="" id="optSelectGender">Select...</option>
+                        <option value="female" id="optFemale">Female</option>
+                        <option value="male" id="optMale">Male</option>
+                        <option value="other" id="optOther">Other/Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="onbEthnicityLabel">Ethnic Background (optional)</label>
+                    <select id="profileEthnicity">
+                        <option value="" id="optPreferNotSay">Prefer not to say</option>
+                        <option value="african" id="optAfrican">African/African American</option>
+                        <option value="asian" id="optAsian">Asian</option>
+                        <option value="caucasian" id="optCaucasian">Caucasian/White</option>
+                        <option value="hispanic" id="optHispanic">Hispanic/Latino</option>
+                        <option value="mixed" id="optMixed">Mixed/Multiple</option>
+                        <option value="other" id="optOtherEth">Other</option>
+                    </select>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="prevStep()" id="onbBackBtn">Back</button>
+                    <button class="btn-primary" onclick="nextStep()" style="width:auto;" id="onbNextBtn">Next</button>
+                </div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="onboarding-step" id="step2">
+                <h2 id="onbStep2Title">Diet & Lifestyle</h2>
+                <p id="onbStep2Desc">This helps us consider food-drug interactions.</p>
+                <div class="form-group">
+                    <label id="onbDietLabel">Dietary Pattern</label>
+                    <select id="profileDiet">
+                        <option value="" id="optSelectDiet">Select...</option>
+                        <option value="regular" id="optRegular">Regular/No restrictions</option>
+                        <option value="vegetarian" id="optVegetarian">Vegetarian</option>
+                        <option value="vegan" id="optVegan">Vegan</option>
+                        <option value="halal" id="optHalal">Halal</option>
+                        <option value="kosher" id="optKosher">Kosher</option>
+                        <option value="glutenfree" id="optGlutenFree">Gluten-free</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="onbAllergiesLabel">Food Allergies</label>
+                    <input type="text" id="profileAllergies" placeholder="e.g., peanuts, shellfish, dairy">
+                </div>
+                <div class="form-group">
+                    <label id="onbAlcoholLabel">Alcohol Use</label>
+                    <select id="profileAlcohol">
+                        <option value="" id="optSelectAlcohol">Select...</option>
+                        <option value="none" id="optNone">None</option>
+                        <option value="occasional" id="optOccasional">Occasional</option>
+                        <option value="moderate" id="optModerate">Moderate</option>
+                        <option value="daily" id="optDaily">Daily</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="onbSmokingLabel">Smoking Status</label>
+                    <select id="profileSmoking">
+                        <option value="" id="optSelectSmoking">Select...</option>
+                        <option value="never" id="optNever">Never smoked</option>
+                        <option value="former" id="optFormer">Former smoker</option>
+                        <option value="current" id="optCurrent">Current smoker</option>
+                    </select>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="prevStep()">Back</button>
+                    <button class="btn-primary" onclick="nextStep()" style="width:auto;">Next</button>
+                </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="onboarding-step" id="step3">
+                <h2 id="onbStep3Title">Health Status</h2>
+                <p id="onbStep3Desc">Current health information for accurate guidance.</p>
+                <div class="form-group">
+                    <label id="onbConditionsLabel">Health Conditions</label>
+                    <div class="checkbox-group" id="conditionsGroup">
+                        <label class="checkbox-item"><input type="checkbox" value="diabetes"><span id="condDiabetes">Diabetes</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="hypertension"><span id="condHypertension">High Blood Pressure</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="heart"><span id="condHeart">Heart Disease</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="kidney"><span id="condKidney">Kidney Disease</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="thyroid"><span id="condThyroid">Thyroid Issues</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="arthritis"><span id="condArthritis">Arthritis</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="asthma"><span id="condAsthma">Asthma/COPD</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="depression"><span id="condDepression">Depression/Anxiety</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label id="onbMobilityLabel">Mobility Level</label>
+                    <select id="profileMobility">
+                        <option value="" id="optSelectMobility">Select...</option>
+                        <option value="full" id="optFullMobile">Fully mobile</option>
+                        <option value="limited" id="optLimited">Some limitations</option>
+                        <option value="assistive" id="optAssistive">Use assistive devices</option>
+                    </select>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="prevStep()">Back</button>
+                    <button class="btn-primary" onclick="nextStep()" style="width:auto;">Next</button>
+                </div>
+            </div>
+            
+            <!-- Step 4 -->
+            <div class="onboarding-step" id="step4">
+                <h2 id="onbStep4Title">Your Health Priorities</h2>
+                <p id="onbStep4Desc">What matters most to you?</p>
+                <div class="form-group">
+                    <label id="onbPrioritiesLabel">Select your priorities</label>
+                    <div class="checkbox-group" id="prioritiesGroup">
+                        <label class="checkbox-item"><input type="checkbox" value="pain"><span id="priPain">Managing pain</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="energy"><span id="priEnergy">Improving energy</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="sleep"><span id="priSleep">Better sleep</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="weight"><span id="priWeight">Weight management</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="mental"><span id="priMental">Mental health</span></label>
+                        <label class="checkbox-item"><input type="checkbox" value="sideeffects"><span id="priSideEffects">Minimize side effects</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label id="onbGoalsLabel">Health goals (optional)</label>
+                    <textarea id="profileGoals" rows="2" placeholder="e.g., Reduce blood pressure medication"></textarea>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn-secondary" onclick="prevStep()">Back</button>
+                    <button class="btn-primary" onclick="completeOnboarding()" style="width:auto;" id="onbCompleteBtn">Complete Setup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <h1>MedGuide</h1>
+            <select id="languageSelector" class="language-selector" onchange="changeLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="zh">中文</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="pt">Português</option>
+                <option value="ja">日本語</option>
+                <option value="ko">한국어</option>
+                <option value="ar">العربية</option>
+                <option value="hi">हिन्दी</option>
+            </select>
+        </div>
+        <p class="subtitle" id="subtitle">Your personalized health understanding assistant</p>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tabHealth" onclick="switchTab('health-guide')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+                <span id="tabHealthText">Health Guide</span>
+            </button>
+            <button class="tab-btn" id="tabDoc" onclick="switchTab('document-analyzer')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span id="tabDocText">Explain Document</span>
+            </button>
+            <button class="tab-btn" id="tabHospital" onclick="switchTab('hospital-finder')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1"></path>
+                    <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                </svg>
+                <span id="tabHospitalText">Find Hospitals</span>
+            </button>
+        </div>
+
+        <!-- Health Guide Tab -->
+        <div id="health-guide" class="tab-content active">
+            <div class="split-container">
+                <!-- Context Panel -->
+                <div class="context-panel">
+                    <div class="context-header">
+                        <h3 id="contextTitle">Your Health Context</h3>
+                        <p id="contextSubtitle">Add info for personalized answers</p>
+                    </div>
+                    <div class="context-body">
+                        <!-- Profile Banners -->
+                        <div class="profile-banner" id="profileBanner" style="display:none">
+                            <span class="profile-banner-text" id="profileBannerText">Profile active</span>
+                            <button class="profile-banner-btn" onclick="showOnboarding()" id="editProfileBtn">Edit Profile</button>
+                        </div>
+                        <div class="profile-banner" id="createProfileBanner">
+                            <span class="profile-banner-text" id="createProfileText">Want personalized guidance?</span>
+                            <button class="profile-banner-btn" onclick="showOnboarding()" id="createProfileBtn">Create Profile</button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label id="lblMedications">Medications</label>
+                            <textarea id="medications" rows="2" placeholder="e.g., Lisinopril 10mg, Metformin 500mg"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label id="lblSupplements">Supplements</label>
+                            <input type="text" id="supplements" placeholder="e.g., Vitamin D, Fish Oil">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblConditions">Health Conditions</label>
+                            <input type="text" id="conditions" placeholder="e.g., high blood pressure, diabetes">
+                        </div>
+                        <div class="form-group">
+                            <label id="lblSymptoms">Current Symptoms</label>
+                            <textarea id="symptoms" rows="2" placeholder="e.g., dizziness, fatigue"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label id="lblAgeRange">Age Range</label>
+                            <select id="ageRange">
+                                <option value="" id="optSelectAge">Select...</option>
+                                <option value="18-30">18-30</option>
+                                <option value="31-50">31-50</option>
+                                <option value="51-65">51-65</option>
+                                <option value="65+">65+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="context-status" id="contextStatus">
+                        <span class="status-dot"></span>
+                        <span id="statusText">Add your info for better answers</span>
+                    </div>
+                </div>
+
+                <!-- Chat Panel -->
+                <div class="chat-panel">
+                    <div class="chat-header">
+                        <h3 id="chatTitle">Ask MedGuide</h3>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-welcome" id="chatWelcome">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
+                            </svg>
+                            <h4 id="welcomeTitle">Welcome to MedGuide</h4>
+                            <p id="welcomeDesc">Ask any health question. Add your medications and symptoms on the left for personalized answers.</p>
+                            <div class="suggestions">
+                                <button class="suggestion-chip" onclick="askSuggestion('side')" id="sug1">Side effects?</button>
+                                <button class="suggestion-chip" onclick="askSuggestion('interactions')" id="sug2">Interactions?</button>
+                                <button class="suggestion-chip" onclick="askSuggestion('lifestyle')" id="sug3">Lifestyle tips</button>
+                                <button class="suggestion-chip" onclick="askSuggestion('doctor')" id="sug4">Doctor questions</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="chatInput" placeholder="Ask a health question..." onkeypress="if(event.key==='Enter')sendMessage()">
+                            <button class="chat-send-btn" onclick="sendMessage()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="chat-disclaimer" id="chatDisclaimer">Educational only. Always consult a healthcare professional.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Tab -->
+        <div id="document-analyzer" class="tab-content">
+            <div class="card">
+                <h2 id="docTitle">Explain My Medical Document</h2>
+                <div class="privacy-notice">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span id="docPrivacy">Your document is processed securely and deleted immediately.</span>
+                </div>
+                <div class="doc-help-box" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:0.5rem;padding:1rem;margin-bottom:1rem;">
+                    <h4 style="color:#1e40af;margin-bottom:0.5rem;font-size:0.9rem;" id="docHelpTitle">What can I upload?</h4>
+                    <p style="color:#1e40af;font-size:0.85rem;margin:0;" id="docHelpText">Upload lab results, prescriptions, doctor's notes, discharge summaries, imaging reports, or any medical document. MedGuide will explain it in simple terms.</p>
+                </div>
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('docInput').click()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p id="uploadText">Click to upload or drag and drop</p>
+                    <p style="font-size:0.8rem;color:#9ca3af" id="uploadTypes">PDF, JPG, or PNG (max 10MB)</p>
+                    <input type="file" id="docInput" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this)">
+                </div>
+                <button class="btn-primary" id="analyzeBtn" onclick="analyzeDoc()" disabled style="margin-top:1rem">Analyze Document</button>
+                <div id="docResults"></div>
+                <div class="disclaimer-box">
+                    <h4 id="disclaimerTitle">Educational Information Only</h4>
+                    <p id="disclaimerText">This analysis is for educational purposes only and does not constitute medical advice.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hospital Tab -->
+        <div id="hospital-finder" class="tab-content">
+            <div class="card">
+                <h2 id="hospitalTitle">Find Hospitals Near You</h2>
+                <div class="emergency-banner">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <p id="emergencyText"><strong>If this is a life-threatening emergency, call 911 immediately.</strong></p>
+                </div>
+                <div class="form-group">
+                    <label id="locationLabel">Your Location</label>
+                    <div class="location-input-group">
+                        <input type="text" id="locationInput" placeholder="Enter city, state or ZIP code">
+                        <button class="btn-location" id="locateBtn" onclick="useMyLocation()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
+                            </svg>
+                            <span id="locateBtnText">Use My Location</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label id="radiusLabel">Search Radius</label>
+                    <select id="radiusSelect">
+                        <option value="8047" id="radius5">5 miles</option>
+                        <option value="16093" selected id="radius10">10 miles</option>
+                        <option value="40234" id="radius25">25 miles</option>
+                        <option value="80467" id="radius50">50 miles</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="searchBtn" onclick="searchHospitals()">Search Hospitals</button>
+                <div id="hospitalResults" style="margin-top:1rem"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p id="footerText">MedGuide is an educational tool. It does not replace professional medical advice.</p>
+        </footer>
+    </div>
+
+<script>
+// =====================================================
+// GLOBAL VARIABLES
+// =====================================================
+var currentLang = "en";
+var selectedFile = null;
+var currentOnboardingStep = 0;
+var userProfile = null;
+
+// =====================================================
+// COMPLETE TRANSLATIONS - ALL 10 LANGUAGES
+// =====================================================
+var T = {
+    en: {
+        // Splash
+        splashSubtitle: "Your Health Understanding Assistant",
+        // Header
+        subtitle: "Your personalized health understanding assistant",
+        // Tabs
+        tabHealth: "Health Guide",
+        tabDoc: "Explain Document",
+        tabHospital: "Find Hospitals",
+        // Context Panel
+        contextTitle: "Your Health Context",
+        contextSubtitle: "Add info for personalized answers",
+        lblMedications: "Medications",
+        lblSupplements: "Supplements",
+        lblConditions: "Health Conditions",
+        lblSymptoms: "Current Symptoms",
+        lblAgeRange: "Age Range",
+        phMedications: "e.g., Lisinopril 10mg, Metformin 500mg",
+        phSupplements: "e.g., Vitamin D, Fish Oil",
+        phConditions: "e.g., high blood pressure, diabetes",
+        phSymptoms: "e.g., dizziness, fatigue",
+        optSelect: "Select...",
+        contextAdded: "Context added - responses will be personalized",
+        contextEmpty: "Add your info for better answers",
+        // Profile
+        profileSaved: "Profile active",
+        editProfile: "Edit Profile",
+        wantPersonalized: "Want personalized guidance?",
+        createProfile: "Create Profile",
+        // Chat
+        chatTitle: "Ask MedGuide",
+        welcomeTitle: "Welcome to MedGuide",
+        welcomeDesc: "Ask any health question. Add your medications and symptoms on the left for personalized answers.",
+        sug1: "Side effects?",
+        sug2: "Interactions?",
+        sug3: "Lifestyle tips",
+        sug4: "Doctor questions",
+        chatPh: "Ask a health question...",
+        chatDisclaimer: "Educational only. Always consult a healthcare professional.",
+        // Document
+        docTitle: "Explain My Medical Document",
+        docPrivacy: "Your document is processed securely and deleted immediately.",
+        uploadText: "Click to upload or drag and drop",
+        uploadTypes: "PDF, JPG, or PNG (max 10MB)",
+        analyzeBtn: "Analyze Document",
+        analyzing: "Analyzing...",
+        disclaimerTitle: "Educational Information Only",
+        disclaimerText: "This analysis is for educational purposes only and does not constitute medical advice.",
+        docType: "Document Type",
+        keyFindings: "Key Findings",
+        whatMeans: "What This Means",
+        questionsDoc: "Questions for Your Doctor",
+        // Hospital
+        hospitalTitle: "Find Hospitals Near You",
+        emergencyText: "If this is a life-threatening emergency, call 911 immediately.",
+        locationLabel: "Your Location",
+        locationPh: "Enter city, state or ZIP code",
+        useLocation: "Use My Location",
+        locating: "Locating...",
+        radiusLabel: "Search Radius",
+        radius5: "5 miles",
+        radius10: "10 miles",
+        radius25: "25 miles",
+        radius50: "50 miles",
+        searchBtn: "Search Hospitals",
+        searching: "Searching...",
+        noResults: "No hospitals found. Try expanding your search radius.",
+        milesAway: "miles away",
+        directions: "Directions",
+        emergency: "Emergency",
+        enterLocation: "Please enter a location",
+        // Document Help
+        docHelpTitle: "What can I upload?",
+        docHelpText: "Upload lab results, prescriptions, doctor's notes, discharge summaries, imaging reports, or any medical document. MedGuide will explain it in simple terms.",
+        // Footer
+        footer: "MedGuide is an educational tool. It does not replace professional medical advice.",
+        // Onboarding
+        onbWelcomeTitle: "Welcome to MedGuide",
+        onbWelcomeDesc: "Get personalized health guidance tailored to your unique background, lifestyle, and health priorities.",
+        onbTime: "Takes about 3-5 minutes",
+        onbStart: "Get Started",
+        onbSkip: "Skip for now",
+        onbStep1Title: "About You",
+        onbStep1Desc: "Help us understand your background for more relevant guidance.",
+        onbAgeLabel: "Age Range",
+        onbGenderLabel: "Biological Sex",
+        onbEthnicityLabel: "Ethnic Background (optional)",
+        onbStep2Title: "Diet & Lifestyle",
+        onbStep2Desc: "This helps us consider food-drug interactions.",
+        onbDietLabel: "Dietary Pattern",
+        onbAllergiesLabel: "Food Allergies",
+        onbAlcoholLabel: "Alcohol Use",
+        onbSmokingLabel: "Smoking Status",
+        onbStep3Title: "Health Status",
+        onbStep3Desc: "Current health information for accurate guidance.",
+        onbConditionsLabel: "Health Conditions",
+        onbMobilityLabel: "Mobility Level",
+        onbStep4Title: "Your Health Priorities",
+        onbStep4Desc: "What matters most to you?",
+        onbPrioritiesLabel: "Select your priorities",
+        onbGoalsLabel: "Health goals (optional)",
+        onbBack: "Back",
+        onbNext: "Next",
+        onbComplete: "Complete Setup",
+        stepOf: "Step",
+        of: "of",
+        // Options
+        optFemale: "Female",
+        optMale: "Male",
+        optOther: "Other/Prefer not to say",
+        optRegular: "Regular/No restrictions",
+        optVegetarian: "Vegetarian",
+        optVegan: "Vegan",
+        optHalal: "Halal",
+        optKosher: "Kosher",
+        optGlutenFree: "Gluten-free",
+        optNone: "None",
+        optOccasional: "Occasional",
+        optModerate: "Moderate",
+        optDaily: "Daily",
+        optNever: "Never smoked",
+        optFormer: "Former smoker",
+        optCurrent: "Current smoker",
+        optFullMobile: "Fully mobile",
+        optLimited: "Some limitations",
+        optAssistive: "Use assistive devices",
+        // Ethnicity options
+        optPreferNotSay: "Prefer not to say",
+        optAfrican: "African/African American",
+        optAsian: "Asian",
+        optCaucasian: "Caucasian/White",
+        optHispanic: "Hispanic/Latino",
+        optMixed: "Mixed/Multiple",
+        optOtherEth: "Other",
+        // Conditions
+        condDiabetes: "Diabetes",
+        condHypertension: "High Blood Pressure",
+        condHeart: "Heart Disease",
+        condKidney: "Kidney Disease",
+        condThyroid: "Thyroid Issues",
+        condArthritis: "Arthritis",
+        condAsthma: "Asthma/COPD",
+        condDepression: "Depression/Anxiety",
+        // Priorities
+        priPain: "Managing pain",
+        priEnergy: "Improving energy",
+        priSleep: "Better sleep",
+        priWeight: "Weight management",
+        priMental: "Mental health",
+        priSideEffects: "Minimize side effects"
+    },
+    es: {
+        splashSubtitle: "Tu Asistente de Salud",
+        subtitle: "Tu asistente de salud personalizado",
+        tabHealth: "Guía de Salud",
+        tabDoc: "Explicar Documento",
+        tabHospital: "Buscar Hospitales",
+        contextTitle: "Tu Contexto de Salud",
+        contextSubtitle: "Agrega información para respuestas personalizadas",
+        lblMedications: "Medicamentos",
+        lblSupplements: "Suplementos",
+        lblConditions: "Condiciones de Salud",
+        lblSymptoms: "Síntomas Actuales",
+        lblAgeRange: "Rango de Edad",
+        phMedications: "ej., Lisinopril 10mg, Metformina 500mg",
+        phSupplements: "ej., Vitamina D, Aceite de Pescado",
+        phConditions: "ej., presión alta, diabetes",
+        phSymptoms: "ej., mareos, fatiga",
+        phAllergies: "ej., cacahuetes, mariscos, lácteos",
+        condDiabetes: "Diabetes",
+        condHypertension: "Presión Alta",
+        condHeart: "Enfermedad Cardíaca",
+        condKidney: "Enfermedad Renal",
+        condThyroid: "Problemas de Tiroides",
+        condArthritis: "Artritis",
+        condAsthma: "Asma/EPOC",
+        condDepression: "Depresión/Ansiedad",
+        priPain: "Controlar el dolor",
+        priEnergy: "Mejorar energía",
+        priSleep: "Mejor sueño",
+        priWeight: "Control de peso",
+        priMental: "Salud mental",
+        priSideEffects: "Minimizar efectos secundarios",
+        optSelect: "Seleccionar...",
+        contextAdded: "Contexto agregado",
+        contextEmpty: "Agrega tu información para mejores respuestas",
+        profileSaved: "Perfil activo",
+        editProfile: "Editar Perfil",
+        wantPersonalized: "¿Quieres orientación personalizada?",
+        createProfile: "Crear Perfil",
+        chatTitle: "Pregunta a MedGuide",
+        welcomeTitle: "Bienvenido a MedGuide",
+        welcomeDesc: "Haz cualquier pregunta de salud. Agrega tus medicamentos y síntomas a la izquierda.",
+        sug1: "¿Efectos secundarios?",
+        sug2: "¿Interacciones?",
+        sug3: "Consejos de vida",
+        sug4: "Preguntas para el médico",
+        chatPh: "Haz una pregunta de salud...",
+        chatDisclaimer: "Solo educativo. Consulta siempre a un profesional de la salud.",
+        docTitle: "Explicar Mi Documento Médico",
+        docPrivacy: "Tu documento se procesa de forma segura y se elimina inmediatamente.",
+        uploadText: "Haz clic para subir o arrastra y suelta",
+        uploadTypes: "PDF, JPG o PNG (máx 10MB)",
+        analyzeBtn: "Analizar Documento",
+        analyzing: "Analizando...",
+        disclaimerTitle: "Solo Información Educativa",
+        disclaimerText: "Este análisis es solo para fines educativos.",
+        docType: "Tipo de Documento",
+        keyFindings: "Hallazgos Clave",
+        whatMeans: "Qué Significa",
+        questionsDoc: "Preguntas para tu Médico",
+        hospitalTitle: "Encontrar Hospitales Cerca de Ti",
+        emergencyText: "Si es una emergencia, llama al 911 inmediatamente.",
+        locationLabel: "Tu Ubicación",
+        locationPh: "Ingresa ciudad, estado o código postal",
+        useLocation: "Usar Mi Ubicación",
+        locating: "Localizando...",
+        radiusLabel: "Radio de Búsqueda",
+        radius5: "5 millas",
+        radius10: "10 millas",
+        radius25: "25 millas",
+        radius50: "50 millas",
+        searchBtn: "Buscar Hospitales",
+        searching: "Buscando...",
+        noResults: "No se encontraron hospitales. Intenta expandir el radio.",
+        milesAway: "millas",
+        directions: "Direcciones",
+        emergency: "Emergencia",
+        enterLocation: "Por favor ingresa una ubicación",
+        docHelpTitle: "¿Qué puedo subir?",
+        docHelpText: "Sube resultados de laboratorio, recetas, notas del médico, resúmenes de alta, informes de imágenes o cualquier documento médico. MedGuide lo explicará en términos simples.",
+        footer: "MedGuide es una herramienta educativa. No reemplaza el consejo médico profesional.",
+        onbWelcomeTitle: "Bienvenido a MedGuide",
+        onbWelcomeDesc: "Obtén orientación de salud personalizada adaptada a tu perfil y prioridades.",
+        onbTime: "Toma aproximadamente 3-5 minutos",
+        onbStart: "Comenzar",
+        onbSkip: "Omitir por ahora",
+        onbStep1Title: "Sobre Ti",
+        onbStep1Desc: "Ayúdanos a entender tu perfil.",
+        onbAgeLabel: "Rango de Edad",
+        onbGenderLabel: "Sexo Biológico",
+        onbEthnicityLabel: "Origen Étnico (opcional)",
+        onbStep2Title: "Dieta y Estilo de Vida",
+        onbStep2Desc: "Nos ayuda a considerar interacciones.",
+        onbDietLabel: "Patrón Dietético",
+        onbAllergiesLabel: "Alergias Alimentarias",
+        onbAlcoholLabel: "Consumo de Alcohol",
+        onbSmokingLabel: "Estado de Tabaquismo",
+        onbStep3Title: "Estado de Salud",
+        onbStep3Desc: "Información de salud actual.",
+        onbConditionsLabel: "Condiciones de Salud",
+        onbMobilityLabel: "Nivel de Movilidad",
+        onbStep4Title: "Tus Prioridades",
+        onbStep4Desc: "¿Qué es lo más importante para ti?",
+        onbPrioritiesLabel: "Selecciona tus prioridades",
+        onbGoalsLabel: "Objetivos de salud (opcional)",
+        onbBack: "Atrás",
+        onbNext: "Siguiente",
+        onbComplete: "Completar",
+        stepOf: "Paso",
+        of: "de",
+        optFemale: "Femenino",
+        optMale: "Masculino",
+        optOther: "Otro/Prefiero no decir",
+        optSelect: "Seleccionar...",
+        optPreferNotSay: "Prefiero no decir",
+        optAfrican: "Africano/Afroamericano",
+        optAsian: "Asiático",
+        optCaucasian: "Caucásico/Blanco",
+        optHispanic: "Hispano/Latino",
+        optMixed: "Mixto/Múltiple",
+        optOtherEth: "Otro",
+        optRegular: "Regular/Sin restricciones",
+        optVegetarian: "Vegetariano",
+        optVegan: "Vegano",
+        optHalal: "Halal",
+        optKosher: "Kosher",
+        optGlutenFree: "Sin gluten",
+        optNone: "Ninguno",
+        optOccasional: "Ocasional",
+        optModerate: "Moderado",
+        optDaily: "Diario",
+        optNever: "Nunca fumé",
+        optFormer: "Ex fumador",
+        optCurrent: "Fumador actual",
+        optFullMobile: "Totalmente móvil",
+        optLimited: "Algunas limitaciones",
+        optAssistive: "Uso dispositivos de asistencia",
+        optPreferNotSay: "Prefiero no decir",
+        optAfrican: "Africano/Afroamericano",
+        optAsian: "Asiático",
+        optCaucasian: "Caucásico/Blanco",
+        optHispanic: "Hispano/Latino",
+        optMixed: "Mixto/Múltiple",
+        optOtherEth: "Otro",
+        condDiabetes: "Diabetes",
+        condHypertension: "Presión Alta",
+        condHeart: "Enfermedad Cardíaca",
+        condKidney: "Enfermedad Renal",
+        condThyroid: "Problemas de Tiroides",
+        condArthritis: "Artritis",
+        condAsthma: "Asma/EPOC",
+        condDepression: "Depresión/Ansiedad",
+        priPain: "Controlar el dolor",
+        priEnergy: "Mejorar energía",
+        priSleep: "Mejor sueño",
+        priWeight: "Control de peso",
+        priMental: "Salud mental",
+        priSideEffects: "Minimizar efectos secundarios"
+    },
+    zh: {
+        splashSubtitle: "您的健康理解助手",
+        subtitle: "您的个性化健康理解助手",
+        tabHealth: "健康指南",
+        tabDoc: "解释文档",
+        tabHospital: "查找医院",
+        contextTitle: "您的健康背景",
+        contextSubtitle: "添加信息以获得个性化答案",
+        lblMedications: "药物",
+        lblSupplements: "补充剂",
+        lblConditions: "健康状况",
+        lblSymptoms: "当前症状",
+        lblAgeRange: "年龄范围",
+        phMedications: "例如：利辛普利 10mg，二甲双胍 500mg",
+        phSupplements: "例如：维生素D，鱼油",
+        phConditions: "例如：高血压，糖尿病",
+        phSymptoms: "例如：头晕，疲劳",
+        phAllergies: "例如：花生、贝类、乳制品",
+        condDiabetes: "糖尿病",
+        condHypertension: "高血压",
+        condHeart: "心脏病",
+        condKidney: "肾病",
+        condThyroid: "甲状腺问题",
+        condArthritis: "关节炎",
+        condAsthma: "哮喘/慢阻肺",
+        condDepression: "抑郁/焦虑",
+        priPain: "控制疼痛",
+        priEnergy: "提高精力",
+        priSleep: "改善睡眠",
+        priWeight: "体重管理",
+        priMental: "心理健康",
+        priSideEffects: "减少副作用",
+        optSelect: "选择...",
+        contextAdded: "已添加背景信息",
+        contextEmpty: "添加您的信息以获得更好的答案",
+        profileSaved: "个人资料已激活",
+        editProfile: "编辑资料",
+        wantPersonalized: "想要个性化指导？",
+        createProfile: "创建个人资料",
+        chatTitle: "询问 MedGuide",
+        welcomeTitle: "欢迎使用 MedGuide",
+        welcomeDesc: "询问任何健康问题。在左侧添加您的药物和症状以获得个性化答案。",
+        sug1: "副作用？",
+        sug2: "相互作用？",
+        sug3: "生活方式建议",
+        sug4: "医生问题",
+        chatPh: "询问健康问题...",
+        chatDisclaimer: "仅供教育用途。请务必咨询医疗专业人员。",
+        docTitle: "解释我的医疗文档",
+        docPrivacy: "您的文档会被安全处理并立即删除。",
+        uploadText: "点击上传或拖放",
+        uploadTypes: "PDF、JPG 或 PNG（最大 10MB）",
+        analyzeBtn: "分析文档",
+        analyzing: "分析中...",
+        disclaimerTitle: "仅供教育信息",
+        disclaimerText: "此分析仅供教育目的。",
+        docType: "文档类型",
+        keyFindings: "主要发现",
+        whatMeans: "这意味着什么",
+        questionsDoc: "向医生提问",
+        hospitalTitle: "查找附近的医院",
+        emergencyText: "如果是紧急情况，请立即拨打 911。",
+        locationLabel: "您的位置",
+        locationPh: "输入城市、州或邮编",
+        useLocation: "使用我的位置",
+        locating: "定位中...",
+        radiusLabel: "搜索半径",
+        radius5: "5 英里",
+        radius10: "10 英里",
+        radius25: "25 英里",
+        radius50: "50 英里",
+        searchBtn: "搜索医院",
+        searching: "搜索中...",
+        noResults: "未找到医院。请尝试扩大搜索半径。",
+        milesAway: "英里",
+        directions: "导航",
+        emergency: "急诊",
+        enterLocation: "请输入位置",
+        docHelpTitle: "我可以上传什么？",
+        docHelpText: "上传化验结果、处方、医生笔记、出院小结、影像报告或任何医疗文档。MedGuide 将用简单的语言解释它。",
+        footer: "MedGuide 是一个教育工具。它不能替代专业医疗建议。",
+        onbWelcomeTitle: "欢迎使用 MedGuide",
+        onbWelcomeDesc: "获取个性化健康指导。",
+        onbTime: "大约需要 3-5 分钟",
+        onbStart: "开始",
+        onbSkip: "暂时跳过",
+        onbStep1Title: "关于您",
+        onbStep1Desc: "帮助我们了解您的背景。",
+        onbAgeLabel: "年龄范围",
+        onbGenderLabel: "生理性别",
+        onbEthnicityLabel: "种族背景（可选）",
+        onbStep2Title: "饮食与生活方式",
+        onbStep2Desc: "帮助我们考虑食物与药物的相互作用。",
+        onbDietLabel: "饮食模式",
+        onbAllergiesLabel: "食物过敏",
+        onbAlcoholLabel: "饮酒情况",
+        onbSmokingLabel: "吸烟状况",
+        onbStep3Title: "健康状况",
+        onbStep3Desc: "当前健康信息。",
+        onbConditionsLabel: "健康状况",
+        onbMobilityLabel: "行动能力",
+        onbStep4Title: "您的优先事项",
+        onbStep4Desc: "什么对您最重要？",
+        onbPrioritiesLabel: "选择您的优先事项",
+        onbGoalsLabel: "健康目标（可选）",
+        onbBack: "返回",
+        onbNext: "下一步",
+        onbComplete: "完成设置",
+        stepOf: "步骤",
+        of: "/",
+        optFemale: "女",
+        optMale: "男",
+        optOther: "其他/不愿透露",
+        optSelect: "选择...",
+        optPreferNotSay: "不愿透露",
+        optAfrican: "非洲裔",
+        optAsian: "亚洲裔",
+        optCaucasian: "白人",
+        optHispanic: "西班牙裔/拉丁裔",
+        optMixed: "混血",
+        optOtherEth: "其他",
+        optRegular: "常规/无限制",
+        optVegetarian: "素食者",
+        optVegan: "纯素食",
+        optHalal: "清真",
+        optKosher: "犹太洁食",
+        optGlutenFree: "无麸质",
+        optNone: "无",
+        optOccasional: "偶尔",
+        optModerate: "适度",
+        optDaily: "每天",
+        optNever: "从不吸烟",
+        optFormer: "曾经吸烟",
+        optCurrent: "目前吸烟",
+        optFullMobile: "完全行动自如",
+        optLimited: "有一些限制",
+        optAssistive: "使用辅助设备",
+        condDiabetes: "糖尿病",
+        condHypertension: "高血压",
+        condHeart: "心脏病",
+        condKidney: "肾病",
+        condThyroid: "甲状腺问题",
+        condArthritis: "关节炎",
+        condAsthma: "哮喘",
+        condDepression: "抑郁/焦虑",
+        priPain: "控制疼痛",
+        priEnergy: "提高精力",
+        priSleep: "改善睡眠",
+        priWeight: "体重管理",
+        priMental: "心理健康",
+        priSideEffects: "减少副作用"
+    },
+    fr: {
+        splashSubtitle: "Votre Assistant Santé",
+        subtitle: "Votre assistant santé personnalisé",
+        tabHealth: "Guide Santé",
+        tabDoc: "Expliquer Document",
+        tabHospital: "Trouver Hôpitaux",
+        contextTitle: "Votre Contexte Santé",
+        contextSubtitle: "Ajoutez des infos pour des réponses personnalisées",
+        lblMedications: "Médicaments",
+        lblSupplements: "Suppléments",
+        lblConditions: "Conditions de Santé",
+        lblSymptoms: "Symptômes Actuels",
+        lblAgeRange: "Tranche d'Âge",
+        optSelect: "Sélectionner...",
+        contextAdded: "Contexte ajouté",
+        contextEmpty: "Ajoutez vos infos",
+        profileSaved: "Profil actif",
+        editProfile: "Modifier Profil",
+        wantPersonalized: "Voulez-vous des conseils personnalisés?",
+        createProfile: "Créer Profil",
+        chatTitle: "Demandez à MedGuide",
+        welcomeTitle: "Bienvenue sur MedGuide",
+        welcomeDesc: "Posez n'importe quelle question de santé.",
+        sug1: "Effets secondaires?",
+        sug2: "Interactions?",
+        sug3: "Conseils de vie",
+        sug4: "Questions médecin",
+        chatPh: "Posez une question de santé...",
+        chatDisclaimer: "Éducatif uniquement. Consultez un professionnel.",
+        docTitle: "Expliquer Mon Document Médical",
+        docPrivacy: "Votre document est traité de manière sécurisée.",
+        uploadText: "Cliquez pour télécharger",
+        uploadTypes: "PDF, JPG ou PNG (max 10Mo)",
+        analyzeBtn: "Analyser",
+        analyzing: "Analyse...",
+        disclaimerTitle: "Information Éducative Uniquement",
+        disclaimerText: "Cette analyse est uniquement à des fins éducatives et ne constitue pas un avis médical.",
+        hospitalTitle: "Trouver des Hôpitaux",
+        emergencyText: "Si c'est une urgence, appelez le 911.",
+        locationLabel: "Votre Localisation",
+        locationPh: "Entrez ville ou code postal",
+        useLocation: "Ma Position",
+        locating: "Localisation...",
+        radiusLabel: "Rayon de Recherche",
+        radius5: "5 miles",
+        radius10: "10 miles",
+        radius25: "25 miles",
+        radius50: "50 miles",
+        searchBtn: "Rechercher",
+        searching: "Recherche...",
+        noResults: "Aucun hôpital trouvé.",
+        milesAway: "miles",
+        directions: "Itinéraire",
+        emergency: "Urgences",
+        docHelpTitle: "Que puis-je télécharger?",
+        docHelpText: "Téléchargez des résultats de laboratoire, ordonnances, notes du médecin, résumés de sortie, rapports d'imagerie ou tout document médical. MedGuide l'expliquera simplement.",
+        phMedications: "ex., Lisinopril 10mg, Metformine 500mg",
+        phSupplements: "ex., Vitamine D, Huile de poisson",
+        phConditions: "ex., hypertension, diabète",
+        phSymptoms: "ex., vertiges, fatigue",
+        phAllergies: "ex., arachides, fruits de mer, produits laitiers",
+        condDiabetes: "Diabète",
+        condHypertension: "Hypertension",
+        condHeart: "Maladie Cardiaque",
+        condKidney: "Maladie Rénale",
+        condThyroid: "Problèmes Thyroïdiens",
+        condArthritis: "Arthrite",
+        condAsthma: "Asthme/BPCO",
+        condDepression: "Dépression/Anxiété",
+        priPain: "Gérer la douleur",
+        priEnergy: "Améliorer l'énergie",
+        priSleep: "Meilleur sommeil",
+        priWeight: "Gestion du poids",
+        priMental: "Santé mentale",
+        priSideEffects: "Minimiser les effets secondaires",
+        footer: "MedGuide est un outil éducatif.",
+        onbWelcomeTitle: "Bienvenue sur MedGuide",
+        onbWelcomeDesc: "Obtenez des conseils de santé personnalisés adaptés à votre profil, votre mode de vie et vos priorités de santé.",
+        onbTime: "Prend environ 3-5 minutes",
+        onbStart: "Commencer",
+        onbSkip: "Passer",
+        onbBack: "Retour",
+        onbNext: "Suivant",
+        onbComplete: "Terminer",
+        onbStep1Title: "À propos de vous",
+        onbStep1Desc: "Aidez-nous à comprendre votre profil pour des conseils plus pertinents.",
+        onbAgeLabel: "Tranche d'âge",
+        onbGenderLabel: "Sexe biologique",
+        onbEthnicityLabel: "Origine ethnique (optionnel)",
+        onbStep2Title: "Alimentation et mode de vie",
+        onbStep2Desc: "Cela nous aide à considérer les interactions aliments-médicaments.",
+        onbDietLabel: "Régime alimentaire",
+        onbAllergiesLabel: "Allergies alimentaires",
+        onbAlcoholLabel: "Consommation d'alcool",
+        onbSmokingLabel: "Statut tabagique",
+        onbStep3Title: "État de santé",
+        onbStep3Desc: "Informations de santé actuelles pour des conseils précis.",
+        onbConditionsLabel: "Conditions de santé",
+        onbMobilityLabel: "Niveau de mobilité",
+        onbStep4Title: "Vos priorités de santé",
+        onbStep4Desc: "Qu'est-ce qui compte le plus pour vous?",
+        onbPrioritiesLabel: "Sélectionnez vos priorités",
+        onbGoalsLabel: "Objectifs de santé (optionnel)",
+        stepOf: "Étape",
+        of: "sur",
+        optSelect: "Sélectionner...",
+        optFemale: "Femme",
+        optMale: "Homme",
+        optOther: "Autre/Préfère ne pas dire",
+        optPreferNotSay: "Préfère ne pas dire",
+        optAfrican: "Africain",
+        optAsian: "Asiatique",
+        optCaucasian: "Caucasien/Blanc",
+        optHispanic: "Hispanique/Latino",
+        optMixed: "Mixte/Multiple",
+        optOtherEth: "Autre",
+        optRegular: "Normal/Sans restrictions",
+        optVegetarian: "Végétarien",
+        optVegan: "Végétalien",
+        optHalal: "Halal",
+        optKosher: "Casher",
+        optGlutenFree: "Sans gluten",
+        optNone: "Aucun",
+        optOccasional: "Occasionnel",
+        optModerate: "Modéré",
+        optDaily: "Quotidien",
+        optNever: "Jamais fumé",
+        optFormer: "Ancien fumeur",
+        optCurrent: "Fumeur actuel",
+        optFullMobile: "Pleinement mobile",
+        optLimited: "Quelques limitations",
+        optAssistive: "Utilise des aides"
+    },
+    de: {
+        splashSubtitle: "Ihr Gesundheitsassistent",
+        subtitle: "Ihr personalisierter Gesundheitsassistent",
+        tabHealth: "Gesundheitsführer",
+        tabDoc: "Dokument Erklären",
+        tabHospital: "Krankenhäuser Finden",
+        contextTitle: "Ihr Gesundheitskontext",
+        contextSubtitle: "Infos für personalisierte Antworten",
+        lblMedications: "Medikamente",
+        lblSupplements: "Nahrungsergänzung",
+        lblConditions: "Gesundheitszustände",
+        lblSymptoms: "Aktuelle Symptome",
+        lblAgeRange: "Altersbereich",
+        optSelect: "Auswählen...",
+        contextAdded: "Kontext hinzugefügt",
+        contextEmpty: "Fügen Sie Ihre Infos hinzu",
+        profileSaved: "Profil aktiv",
+        editProfile: "Profil Bearbeiten",
+        wantPersonalized: "Personalisierte Beratung?",
+        createProfile: "Profil Erstellen",
+        chatTitle: "MedGuide Fragen",
+        welcomeTitle: "Willkommen bei MedGuide",
+        welcomeDesc: "Stellen Sie jede Gesundheitsfrage.",
+        sug1: "Nebenwirkungen?",
+        sug2: "Wechselwirkungen?",
+        sug3: "Lebensstil-Tipps",
+        sug4: "Arzt-Fragen",
+        chatPh: "Stellen Sie eine Frage...",
+        chatDisclaimer: "Nur zu Bildungszwecken.",
+        docTitle: "Dokument Erklären",
+        docPrivacy: "Ihr Dokument wird sicher verarbeitet und sofort gelöscht.",
+        uploadText: "Klicken zum Hochladen oder per Drag & Drop",
+        uploadTypes: "PDF, JPG oder PNG (max 10MB)",
+        analyzeBtn: "Analysieren",
+        analyzing: "Analysiere...",
+        disclaimerTitle: "Nur Bildungsinformation",
+        disclaimerText: "Diese Analyse dient nur zu Bildungszwecken und stellt keine medizinische Beratung dar.",
+        hospitalTitle: "Krankenhäuser Finden",
+        emergencyText: "Bei Notfall 911 anrufen.",
+        locationLabel: "Ihr Standort",
+        locationPh: "Stadt oder PLZ eingeben",
+        useLocation: "Mein Standort",
+        locating: "Lokalisiere...",
+        radiusLabel: "Suchradius",
+        radius5: "5 Meilen",
+        radius10: "10 Meilen",
+        radius25: "25 Meilen",
+        radius50: "50 Meilen",
+        searchBtn: "Suchen",
+        searching: "Suche...",
+        noResults: "Keine gefunden.",
+        milesAway: "Meilen",
+        directions: "Route",
+        emergency: "Notaufnahme",
+        docHelpTitle: "Was kann ich hochladen?",
+        docHelpText: "Laden Sie Laborergebnisse, Rezepte, Arztnotizen, Entlassungsberichte, Bildberichte oder andere medizinische Dokumente hoch. MedGuide erklärt sie einfach.",
+        phMedications: "z.B., Lisinopril 10mg, Metformin 500mg",
+        phSupplements: "z.B., Vitamin D, Fischöl",
+        phConditions: "z.B., Bluthochdruck, Diabetes",
+        phSymptoms: "z.B., Schwindel, Müdigkeit",
+        phAllergies: "z.B. Erdnüsse, Meeresfrüchte, Milchprodukte",
+        condDiabetes: "Diabetes",
+        condHypertension: "Bluthochdruck",
+        condHeart: "Herzerkrankung",
+        condKidney: "Nierenerkrankung",
+        condThyroid: "Schilddrüsenprobleme",
+        condArthritis: "Arthritis",
+        condAsthma: "Asthma/COPD",
+        condDepression: "Depression/Angst",
+        priPain: "Schmerzen bewältigen",
+        priEnergy: "Energie verbessern",
+        priSleep: "Besser schlafen",
+        priWeight: "Gewichtsmanagement",
+        priMental: "Psychische Gesundheit",
+        priSideEffects: "Nebenwirkungen minimieren",
+        footer: "MedGuide ist ein Bildungstool.",
+        onbWelcomeTitle: "Willkommen bei MedGuide",
+        onbWelcomeDesc: "Erhalten Sie personalisierte Gesundheitsberatung, die auf Ihren Hintergrund, Lebensstil und Gesundheitsprioritäten zugeschnitten ist.",
+        onbTime: "Dauert etwa 3-5 Minuten",
+        onbStart: "Beginnen",
+        onbSkip: "Überspringen",
+        onbBack: "Zurück",
+        onbNext: "Weiter",
+        onbComplete: "Fertig",
+        onbStep1Title: "Über Sie",
+        onbStep1Desc: "Helfen Sie uns, Ihren Hintergrund zu verstehen, um relevantere Beratung zu geben.",
+        onbAgeLabel: "Altersbereich",
+        onbGenderLabel: "Biologisches Geschlecht",
+        onbEthnicityLabel: "Ethnischer Hintergrund (optional)",
+        onbStep2Title: "Ernährung und Lebensstil",
+        onbStep2Desc: "Dies hilft uns, Wechselwirkungen zwischen Nahrung und Medikamenten zu berücksichtigen.",
+        onbDietLabel: "Ernährungsmuster",
+        onbAllergiesLabel: "Lebensmittelallergien",
+        onbAlcoholLabel: "Alkoholkonsum",
+        onbSmokingLabel: "Raucherstatus",
+        onbStep3Title: "Gesundheitszustand",
+        onbStep3Desc: "Aktuelle Gesundheitsinformationen für genaue Beratung.",
+        onbConditionsLabel: "Gesundheitszustände",
+        onbMobilityLabel: "Mobilitätsniveau",
+        onbStep4Title: "Ihre Gesundheitsprioritäten",
+        onbStep4Desc: "Was ist Ihnen am wichtigsten?",
+        onbPrioritiesLabel: "Wählen Sie Ihre Prioritäten",
+        onbGoalsLabel: "Gesundheitsziele (optional)",
+        stepOf: "Schritt",
+        of: "von",
+        optFemale: "Weiblich",
+        optMale: "Männlich",
+        optOther: "Andere/Keine Angabe",
+        optPreferNotSay: "Keine Angabe",
+        optAfrican: "Afrikanisch",
+        optAsian: "Asiatisch",
+        optCaucasian: "Kaukasisch/Weiß",
+        optHispanic: "Hispanisch/Latino",
+        optMixed: "Gemischt",
+        optOtherEth: "Andere",
+        optRegular: "Normal/Keine Einschränkungen",
+        optVegetarian: "Vegetarisch",
+        optVegan: "Vegan",
+        optHalal: "Halal",
+        optKosher: "Koscher",
+        optGlutenFree: "Glutenfrei",
+        optNone: "Keiner",
+        optOccasional: "Gelegentlich",
+        optModerate: "Mäßig",
+        optDaily: "Täglich",
+        optNever: "Nie geraucht",
+        optFormer: "Ehemaliger Raucher",
+        optCurrent: "Aktueller Raucher",
+        optFullMobile: "Voll mobil",
+        optLimited: "Einige Einschränkungen",
+        optAssistive: "Nutze Hilfsmittel"
+    },
+    pt: {
+        splashSubtitle: "Seu Assistente de Saúde",
+        subtitle: "Seu assistente de saúde personalizado",
+        tabHealth: "Guia de Saúde",
+        tabDoc: "Explicar Documento",
+        tabHospital: "Encontrar Hospitais",
+        contextTitle: "Seu Contexto de Saúde",
+        contextSubtitle: "Adicione informações",
+        lblMedications: "Medicamentos",
+        lblSupplements: "Suplementos",
+        lblConditions: "Condições de Saúde",
+        lblSymptoms: "Sintomas Atuais",
+        lblAgeRange: "Faixa Etária",
+        optSelect: "Selecionar...",
+        contextAdded: "Contexto adicionado",
+        contextEmpty: "Adicione suas informações",
+        profileSaved: "Perfil ativo",
+        editProfile: "Editar Perfil",
+        wantPersonalized: "Quer orientação personalizada?",
+        createProfile: "Criar Perfil",
+        chatTitle: "Pergunte ao MedGuide",
+        welcomeTitle: "Bem-vindo ao MedGuide",
+        welcomeDesc: "Faça qualquer pergunta de saúde.",
+        sug1: "Efeitos colaterais?",
+        sug2: "Interações?",
+        sug3: "Dicas de vida",
+        sug4: "Perguntas médico",
+        chatPh: "Faça uma pergunta...",
+        chatDisclaimer: "Apenas educacional.",
+        docTitle: "Explicar Documento Médico",
+        docPrivacy: "Seu documento é processado com segurança e excluído imediatamente.",
+        uploadText: "Clique para enviar ou arraste e solte",
+        uploadTypes: "PDF, JPG ou PNG (máx 10MB)",
+        analyzeBtn: "Analisar",
+        analyzing: "Analisando...",
+        disclaimerTitle: "Apenas Informação Educacional",
+        disclaimerText: "Esta análise é apenas para fins educacionais e não constitui aconselhamento médico.",
+        hospitalTitle: "Encontrar Hospitais",
+        emergencyText: "Se for emergência, ligue 911.",
+        locationLabel: "Sua Localização",
+        locationPh: "Digite cidade ou CEP",
+        useLocation: "Minha Localização",
+        locating: "Localizando...",
+        radiusLabel: "Raio de Busca",
+        radius5: "5 milhas",
+        radius10: "10 milhas",
+        radius25: "25 milhas",
+        radius50: "50 milhas",
+        searchBtn: "Buscar",
+        searching: "Buscando...",
+        noResults: "Nenhum encontrado.",
+        milesAway: "milhas",
+        directions: "Direções",
+        emergency: "Emergência",
+        docHelpTitle: "O que posso enviar?",
+        docHelpText: "Envie resultados de exames, receitas, notas médicas, resumos de alta, relatórios de imagem ou qualquer documento médico. MedGuide explicará em termos simples.",
+        phMedications: "ex., Lisinopril 10mg, Metformina 500mg",
+        phSupplements: "ex., Vitamina D, Óleo de Peixe",
+        phConditions: "ex., pressão alta, diabetes",
+        phSymptoms: "ex., tontura, fadiga",
+         phAllergies: "ex., amendoins, frutos do mar, laticínios",
+        condDiabetes: "Diabetes",
+        condHypertension: "Pressão Alta",
+        condHeart: "Doença Cardíaca",
+        condKidney: "Doença Renal",
+        condThyroid: "Problemas de Tireoide",
+        condArthritis: "Artrite",
+        condAsthma: "Asma/DPOC",
+        condDepression: "Depressão/Ansiedade",
+        priPain: "Controlar a dor",
+        priEnergy: "Melhorar energia",
+        priSleep: "Dormir melhor",
+        priWeight: "Controle de peso",
+        priMental: "Saúde mental",
+        priSideEffects: "Minimizar efeitos colaterais",
+        footer: "MedGuide é uma ferramenta educacional.",
+        onbWelcomeTitle: "Bem-vindo ao MedGuide",
+        onbWelcomeDesc: "Obtenha orientação de saúde personalizada adaptada ao seu perfil, estilo de vida e prioridades de saúde.",
+        onbTime: "Leva cerca de 3-5 minutos",
+        onbStart: "Começar",
+        onbSkip: "Pular",
+        onbBack: "Voltar",
+        onbNext: "Próximo",
+        onbComplete: "Concluir",
+        onbStep1Title: "Sobre Você",
+        onbStep1Desc: "Ajude-nos a entender seu perfil para orientações mais relevantes.",
+        onbAgeLabel: "Faixa Etária",
+        onbGenderLabel: "Sexo Biológico",
+        onbEthnicityLabel: "Origem Étnica (opcional)",
+        onbStep2Title: "Dieta e Estilo de Vida",
+        onbStep2Desc: "Isso nos ajuda a considerar interações entre alimentos e medicamentos.",
+        onbDietLabel: "Padrão Alimentar",
+        onbAllergiesLabel: "Alergias Alimentares",
+        onbAlcoholLabel: "Consumo de Álcool",
+        onbSmokingLabel: "Status de Tabagismo",
+        onbStep3Title: "Estado de Saúde",
+        onbStep3Desc: "Informações de saúde atuais para orientação precisa.",
+        onbConditionsLabel: "Condições de Saúde",
+        onbMobilityLabel: "Nível de Mobilidade",
+        onbStep4Title: "Suas Prioridades de Saúde",
+        onbStep4Desc: "O que é mais importante para você?",
+        onbPrioritiesLabel: "Selecione suas prioridades",
+        onbGoalsLabel: "Objetivos de Saúde (opcional)",
+        stepOf: "Passo",
+        of: "de",
+        optFemale: "Feminino",
+        optMale: "Masculino",
+        optOther: "Outro/Prefiro não dizer",
+        optPreferNotSay: "Prefiro não dizer",
+        optAfrican: "Africano",
+        optAsian: "Asiático",
+        optCaucasian: "Caucasiano/Branco",
+        optHispanic: "Hispânico/Latino",
+        optMixed: "Misto/Múltiplo",
+        optOtherEth: "Outro",
+        optRegular: "Regular/Sem restrições",
+        optVegetarian: "Vegetariano",
+        optVegan: "Vegano",
+        optHalal: "Halal",
+        optKosher: "Kosher",
+        optGlutenFree: "Sem glúten",
+        optNone: "Nenhum",
+        optOccasional: "Ocasional",
+        optModerate: "Moderado",
+        optDaily: "Diário",
+        optNever: "Nunca fumou",
+        optFormer: "Ex-fumante",
+        optCurrent: "Fumante atual",
+        optFullMobile: "Totalmente móvel",
+        optLimited: "Algumas limitações",
+        optAssistive: "Usa dispositivos de assistência"
+    },
+    ja: {
+        splashSubtitle: "健康理解アシスタント",
+        subtitle: "パーソナライズされた健康アシスタント",
+        tabHealth: "健康ガイド",
+        tabDoc: "文書を説明",
+        tabHospital: "病院を探す",
+        contextTitle: "健康コンテキスト",
+        contextSubtitle: "情報を追加してください",
+        lblMedications: "薬",
+        lblSupplements: "サプリメント",
+        lblConditions: "健康状態",
+        lblSymptoms: "現在の症状",
+        lblAgeRange: "年齢層",
+        optSelect: "選択...",
+        contextAdded: "コンテキスト追加済み",
+        contextEmpty: "情報を追加してください",
+        profileSaved: "プロファイル有効",
+        editProfile: "編集",
+        wantPersonalized: "パーソナライズされたガイダンス？",
+        createProfile: "プロファイル作成",
+        chatTitle: "MedGuideに質問",
+        welcomeTitle: "MedGuideへようこそ",
+        welcomeDesc: "健康に関する質問をどうぞ。",
+        sug1: "副作用？",
+        sug2: "相互作用？",
+        sug3: "ライフスタイル",
+        sug4: "医師への質問",
+        chatPh: "健康に関する質問...",
+        chatDisclaimer: "教育目的のみ。",
+        docTitle: "医療文書を説明",
+        docPrivacy: "ドキュメントは安全に処理され、すぐに削除されます。",
+        uploadText: "クリックしてアップロードまたはドラッグ＆ドロップ",
+        uploadTypes: "PDF、JPGまたはPNG（最大10MB）",
+        analyzeBtn: "分析",
+        analyzing: "分析中...",
+        disclaimerTitle: "教育情報のみ",
+        disclaimerText: "この分析は教育目的のみであり、医療アドバイスではありません。",
+        hospitalTitle: "近くの病院",
+        emergencyText: "緊急時は911に電話。",
+        locationLabel: "あなたの場所",
+        locationPh: "市区町村または郵便番号",
+        useLocation: "現在地",
+        locating: "特定中...",
+        radiusLabel: "検索半径",
+        radius5: "5マイル",
+        radius10: "10マイル",
+        radius25: "25マイル",
+        radius50: "50マイル",
+        searchBtn: "検索",
+        searching: "検索中...",
+        noResults: "見つかりません。",
+        milesAway: "マイル",
+        directions: "道順",
+        emergency: "救急",
+        docHelpTitle: "何をアップロードできますか？",
+        docHelpText: "検査結果、処方箋、医師のメモ、退院サマリー、画像レポート、または任意の医療文書をアップロードしてください。MedGuideが簡単な言葉で説明します。",
+        phMedications: "例：リシノプリル10mg、メトホルミン500mg",
+        phSupplements: "例：ビタミンD、フィッシュオイル",
+        phConditions: "例：高血圧、糖尿病",
+        phSymptoms: "例：めまい、疲労",
+         phAllergies: "例：ピーナッツ、貝類、乳製品",
+        condDiabetes: "糖尿病",
+        condHypertension: "高血圧",
+        condHeart: "心臓病",
+        condKidney: "腎臓病",
+        condThyroid: "甲状腺の問題",
+        condArthritis: "関節炎",
+        condAsthma: "喘息/COPD",
+        condDepression: "うつ病/不安",
+        priPain: "痛みの管理",
+        priEnergy: "エネルギー改善",
+        priSleep: "睡眠改善",
+        priWeight: "体重管理",
+        priMental: "精神的健康",
+        priSideEffects: "副作用の最小化",
+        footer: "MedGuideは教育ツールです。",
+        onbWelcomeTitle: "MedGuideへようこそ",
+        onbWelcomeDesc: "あなたの背景、ライフスタイル、健康の優先事項に合わせた個別の健康ガイダンスを受けましょう。",
+        onbTime: "約3〜5分かかります",
+        onbStart: "開始",
+        onbSkip: "スキップ",
+        onbBack: "戻る",
+        onbNext: "次へ",
+        onbComplete: "完了",
+        onbStep1Title: "あなたについて",
+        onbStep1Desc: "より適切なガイダンスのために、あなたの背景を理解するのを助けてください。",
+        onbAgeLabel: "年齢層",
+        onbGenderLabel: "生物学的性別",
+        onbEthnicityLabel: "民族的背景（任意）",
+        onbStep2Title: "食事とライフスタイル",
+        onbStep2Desc: "食品と薬の相互作用を考慮するのに役立ちます。",
+        onbDietLabel: "食事パターン",
+        onbAllergiesLabel: "食物アレルギー",
+        onbAlcoholLabel: "飲酒",
+        onbSmokingLabel: "喫煙状況",
+        onbStep3Title: "健康状態",
+        onbStep3Desc: "正確なガイダンスのための現在の健康情報。",
+        onbConditionsLabel: "健康状態",
+        onbMobilityLabel: "移動能力",
+        onbStep4Title: "健康の優先事項",
+        onbStep4Desc: "何が最も重要ですか？",
+        onbPrioritiesLabel: "優先事項を選択",
+        onbGoalsLabel: "健康目標（任意）",
+        stepOf: "ステップ",
+        of: "/",
+        optFemale: "女性",
+        optMale: "男性",
+        optOther: "その他/回答しない",
+        optPreferNotSay: "回答しない",
+        optAfrican: "アフリカ系",
+        optAsian: "アジア系",
+        optCaucasian: "白人",
+        optHispanic: "ヒスパニック/ラテン系",
+        optMixed: "混血",
+        optOtherEth: "その他",
+        optRegular: "通常/制限なし",
+        optVegetarian: "ベジタリアン",
+        optVegan: "ビーガン",
+        optHalal: "ハラール",
+        optKosher: "コーシャ",
+        optGlutenFree: "グルテンフリー",
+        optNone: "なし",
+        optOccasional: "たまに",
+        optModerate: "適度",
+        optDaily: "毎日",
+        optNever: "吸ったことがない",
+        optFormer: "以前は吸っていた",
+        optCurrent: "現在吸っている",
+        optFullMobile: "完全に動ける",
+        optLimited: "一部制限あり",
+        optAssistive: "補助器具を使用"
+    },
+    ko: {
+        splashSubtitle: "건강 이해 도우미",
+        subtitle: "맞춤형 건강 도우미",
+        tabHealth: "건강 가이드",
+        tabDoc: "문서 설명",
+        tabHospital: "병원 찾기",
+        contextTitle: "건강 컨텍스트",
+        contextSubtitle: "정보를 추가하세요",
+        lblMedications: "약물",
+        lblSupplements: "보충제",
+        lblConditions: "건강 상태",
+        lblSymptoms: "현재 증상",
+        lblAgeRange: "나이 범위",
+        optSelect: "선택...",
+        contextAdded: "컨텍스트 추가됨",
+        contextEmpty: "정보를 추가하세요",
+        profileSaved: "프로필 활성",
+        editProfile: "편집",
+        wantPersonalized: "맞춤 안내를 원하시나요?",
+        createProfile: "프로필 만들기",
+        chatTitle: "MedGuide에 질문",
+        welcomeTitle: "MedGuide에 오신 것을 환영합니다",
+        welcomeDesc: "건강 질문을 하세요.",
+        sug1: "부작용?",
+        sug2: "상호작용?",
+        sug3: "생활 습관",
+        sug4: "의사 질문",
+        chatPh: "건강 질문...",
+        chatDisclaimer: "교육 목적으로만.",
+        docTitle: "의료 문서 설명",
+        docPrivacy: "문서는 안전하게 처리되고 즉시 삭제됩니다.",
+        uploadText: "클릭하여 업로드하거나 드래그 앤 드롭",
+        uploadTypes: "PDF, JPG 또는 PNG (최대 10MB)",
+        analyzeBtn: "분석",
+        analyzing: "분석 중...",
+        disclaimerTitle: "교육 정보만",
+        disclaimerText: "이 분석은 교육 목적으로만 사용되며 의료 조언이 아닙니다.",
+        hospitalTitle: "근처 병원",
+        emergencyText: "응급시 911 전화.",
+        locationLabel: "위치",
+        locationPh: "도시 또는 우편번호",
+        useLocation: "내 위치",
+        locating: "찾는 중...",
+        radiusLabel: "검색 반경",
+        radius5: "5 마일",
+        radius10: "10 마일",
+        radius25: "25 마일",
+        radius50: "50 마일",
+        searchBtn: "검색",
+        searching: "검색 중...",
+        noResults: "없음.",
+        milesAway: "마일",
+        directions: "길찾기",
+        emergency: "응급실",
+        docHelpTitle: "무엇을 업로드할 수 있나요?",
+        docHelpText: "검사 결과, 처방전, 의사 메모, 퇴원 요약, 영상 보고서 또는 의료 문서를 업로드하세요. MedGuide가 쉬운 말로 설명합니다.",
+        phMedications: "예: 리시노프릴 10mg, 메트포르민 500mg",
+        phSupplements: "예: 비타민 D, 피쉬 오일",
+        phConditions: "예: 고혈압, 당뇨병",
+        phSymptoms: "예: 어지러움, 피로",
+         phAllergies: "예: 땅콩, 조개류, 유제품",
+        condDiabetes: "당뇨병",
+        condHypertension: "고혈압",
+        condHeart: "심장병",
+        condKidney: "신장병",
+        condThyroid: "갑상선 문제",
+        condArthritis: "관절염",
+        condAsthma: "천식/COPD",
+        condDepression: "우울증/불안",
+        priPain: "통증 관리",
+        priEnergy: "에너지 향상",
+        priSleep: "수면 개선",
+        priWeight: "체중 관리",
+        priMental: "정신 건강",
+        priSideEffects: "부작용 최소화",
+        footer: "MedGuide는 교육 도구입니다.",
+        onbWelcomeTitle: "MedGuide에 오신 것을 환영합니다",
+        onbWelcomeDesc: "귀하의 배경, 생활 방식 및 건강 우선 순위에 맞춘 맞춤형 건강 안내를 받으세요.",
+        onbTime: "약 3-5분 소요",
+        onbStart: "시작",
+        onbSkip: "건너뛰기",
+        onbBack: "뒤로",
+        onbNext: "다음",
+        onbComplete: "완료",
+        onbStep1Title: "당신에 대해",
+        onbStep1Desc: "더 관련성 있는 안내를 위해 배경을 이해하도록 도와주세요.",
+        onbAgeLabel: "나이 범위",
+        onbGenderLabel: "생물학적 성별",
+        onbEthnicityLabel: "민족 배경 (선택 사항)",
+        onbStep2Title: "식단 및 생활 방식",
+        onbStep2Desc: "음식-약물 상호 작용을 고려하는 데 도움이 됩니다.",
+        onbDietLabel: "식이 패턴",
+        onbAllergiesLabel: "음식 알레르기",
+        onbAlcoholLabel: "음주",
+        onbSmokingLabel: "흡연 상태",
+        onbStep3Title: "건강 상태",
+        onbStep3Desc: "정확한 안내를 위한 현재 건강 정보.",
+        onbConditionsLabel: "건강 상태",
+        onbMobilityLabel: "이동성 수준",
+        onbStep4Title: "건강 우선 순위",
+        onbStep4Desc: "무엇이 가장 중요합니까?",
+        onbPrioritiesLabel: "우선 순위 선택",
+        onbGoalsLabel: "건강 목표 (선택 사항)",
+        stepOf: "단계",
+        of: "/",
+        optFemale: "여성",
+        optMale: "남성",
+        optOther: "기타/밝히지 않음",
+        optPreferNotSay: "밝히지 않음",
+        optAfrican: "아프리카계",
+        optAsian: "아시아계",
+        optCaucasian: "백인",
+        optHispanic: "히스패닉/라틴계",
+        optMixed: "혼혈",
+        optOtherEth: "기타",
+        optRegular: "일반/제한 없음",
+        optVegetarian: "채식주의자",
+        optVegan: "비건",
+        optHalal: "할랄",
+        optKosher: "코셔",
+        optGlutenFree: "글루텐 프리",
+        optNone: "없음",
+        optOccasional: "가끔",
+        optModerate: "적당히",
+        optDaily: "매일",
+        optNever: "피운 적 없음",
+        optFormer: "전 흡연자",
+        optCurrent: "현재 흡연자",
+        optFullMobile: "완전 이동 가능",
+        optLimited: "일부 제한",
+        optAssistive: "보조 기구 사용"
+    },
+    ar: {
+        splashSubtitle: "مساعدك الصحي",
+        subtitle: "مساعدك الصحي المخصص",
+        tabHealth: "دليل الصحة",
+        tabDoc: "شرح المستند",
+        tabHospital: "البحث عن المستشفيات",
+        contextTitle: "السياق الصحي",
+        contextSubtitle: "أضف معلومات",
+        lblMedications: "الأدوية",
+        lblSupplements: "المكملات",
+        lblConditions: "الحالات الصحية",
+        lblSymptoms: "الأعراض الحالية",
+        lblAgeRange: "الفئة العمرية",
+        optSelect: "اختر...",
+        contextAdded: "تمت إضافة السياق",
+        contextEmpty: "أضف معلوماتك",
+        profileSaved: "الملف نشط",
+        editProfile: "تعديل",
+        wantPersonalized: "تريد إرشادات مخصصة؟",
+        createProfile: "إنشاء ملف",
+        chatTitle: "اسأل MedGuide",
+        welcomeTitle: "مرحباً بك في MedGuide",
+        welcomeDesc: "اطرح أي سؤال صحي.",
+        sug1: "الآثار الجانبية؟",
+        sug2: "التفاعلات؟",
+        sug3: "نصائح الحياة",
+        sug4: "أسئلة للطبيب",
+        chatPh: "اطرح سؤالاً صحياً...",
+        chatDisclaimer: "للأغراض التعليمية فقط.",
+        docTitle: "شرح المستند الطبي",
+        docPrivacy: "تتم معالجة مستندك بشكل آمن ويتم حذفه فوراً.",
+        uploadText: "انقر للتحميل أو اسحب وأفلت",
+        uploadTypes: "PDF أو JPG أو PNG (حد أقصى 10 ميجابايت)",
+        analyzeBtn: "تحليل",
+        analyzing: "جاري التحليل...",
+        disclaimerTitle: "معلومات تعليمية فقط",
+        disclaimerText: "هذا التحليل للأغراض التعليمية فقط ولا يشكل نصيحة طبية.",
+        hospitalTitle: "البحث عن المستشفيات",
+        emergencyText: "للطوارئ اتصل 911.",
+        locationLabel: "موقعك",
+        locationPh: "أدخل المدينة أو الرمز البريدي",
+        useLocation: "موقعي",
+        locating: "تحديد...",
+        radiusLabel: "نطاق البحث",
+        radius5: "5 أميال",
+        radius10: "10 أميال",
+        radius25: "25 ميل",
+        radius50: "50 ميل",
+        searchBtn: "بحث",
+        searching: "جاري البحث...",
+        noResults: "لم يتم العثور.",
+        milesAway: "أميال",
+        directions: "الاتجاهات",
+        emergency: "طوارئ",
+        docHelpTitle: "ماذا يمكنني تحميله؟",
+        docHelpText: "حمّل نتائج المختبر، الوصفات الطبية، ملاحظات الطبيب، ملخصات الخروج، تقارير التصوير أو أي مستند طبي. سيشرحه MedGuide بكلمات بسيطة.",
+        phMedications: "مثال: ليسينوبريل 10mg، ميتفورمين 500mg",
+        phSupplements: "مثال: فيتامين د، زيت السمك",
+        phConditions: "مثال: ضغط الدم المرتفع، السكري",
+        phSymptoms: "مثال: دوخة، إرهاق",
+        phAllergies: "مثال: الفول السوداني، المأكولات البحرية، منتجات الألبان",
+        condDiabetes: "السكري",
+        condHypertension: "ضغط الدم المرتفع",
+        condHeart: "أمراض القلب",
+        condKidney: "أمراض الكلى",
+        condThyroid: "مشاكل الغدة الدرقية",
+        condArthritis: "التهاب المفاصل",
+        condAsthma: "الربو/مرض الانسداد الرئوي",
+        condDepression: "الاكتئاب/القلق",
+        priPain: "إدارة الألم",
+        priEnergy: "تحسين الطاقة",
+        priSleep: "نوم أفضل",
+        priWeight: "إدارة الوزن",
+        priMental: "الصحة النفسية",
+        priSideEffects: "تقليل الآثار الجانبية",
+        footer: "MedGuide أداة تعليمية.",
+        onbWelcomeTitle: "مرحباً بك في MedGuide",
+        onbWelcomeDesc: "احصل على إرشادات صحية مخصصة تناسب خلفيتك ونمط حياتك وأولوياتك الصحية.",
+        onbTime: "يستغرق حوالي 3-5 دقائق",
+        onbStart: "ابدأ",
+        onbSkip: "تخطي",
+        onbBack: "رجوع",
+        onbNext: "التالي",
+        onbComplete: "إكمال",
+        onbStep1Title: "عنك",
+        onbStep1Desc: "ساعدنا في فهم خلفيتك للحصول على إرشادات أكثر صلة.",
+        onbAgeLabel: "الفئة العمرية",
+        onbGenderLabel: "الجنس البيولوجي",
+        onbEthnicityLabel: "الخلفية العرقية (اختياري)",
+        onbStep2Title: "النظام الغذائي ونمط الحياة",
+        onbStep2Desc: "يساعدنا هذا في مراعاة تفاعلات الطعام والدواء.",
+        onbDietLabel: "النمط الغذائي",
+        onbAllergiesLabel: "حساسية الطعام",
+        onbAlcoholLabel: "استهلاك الكحول",
+        onbSmokingLabel: "حالة التدخين",
+        onbStep3Title: "الحالة الصحية",
+        onbStep3Desc: "معلومات صحية حالية للإرشاد الدقيق.",
+        onbConditionsLabel: "الحالات الصحية",
+        onbMobilityLabel: "مستوى الحركة",
+        onbStep4Title: "أولوياتك الصحية",
+        onbStep4Desc: "ما الأهم بالنسبة لك؟",
+        onbPrioritiesLabel: "اختر أولوياتك",
+        onbGoalsLabel: "الأهداف الصحية (اختياري)",
+        stepOf: "خطوة",
+        of: "من",
+        optFemale: "أنثى",
+        optMale: "ذكر",
+        optOther: "آخر/أفضل عدم القول",
+        optPreferNotSay: "أفضل عدم القول",
+        optAfrican: "أفريقي",
+        optAsian: "آسيوي",
+        optCaucasian: "قوقازي/أبيض",
+        optHispanic: "لاتيني",
+        optMixed: "مختلط",
+        optOtherEth: "آخر",
+        optRegular: "عادي/بدون قيود",
+        optVegetarian: "نباتي",
+        optVegan: "نباتي صرف",
+        optHalal: "حلال",
+        optKosher: "كوشر",
+        optGlutenFree: "خالٍ من الغلوتين",
+        optNone: "لا شيء",
+        optOccasional: "أحياناً",
+        optModerate: "معتدل",
+        optDaily: "يومياً",
+        optNever: "لم أدخن أبداً",
+        optFormer: "مدخن سابق",
+        optCurrent: "مدخن حالي",
+        optFullMobile: "متحرك بالكامل",
+        optLimited: "بعض القيود",
+        optAssistive: "أستخدم أدوات مساعدة"
+    },
+    hi: {
+        splashSubtitle: "आपका स्वास्थ्य सहायक",
+        subtitle: "आपका व्यक्तिगत स्वास्थ्य सहायक",
+        tabHealth: "स्वास्थ्य गाइड",
+        tabDoc: "दस्तावेज़ समझाएं",
+        tabHospital: "अस्पताल खोजें",
+        contextTitle: "स्वास्थ्य संदर्भ",
+        contextSubtitle: "जानकारी जोड़ें",
+        lblMedications: "दवाएं",
+        lblSupplements: "सप्लीमेंट्स",
+        lblConditions: "स्वास्थ्य स्थितियां",
+        lblSymptoms: "वर्तमान लक्षण",
+        lblAgeRange: "आयु सीमा",
+        optSelect: "चुनें...",
+        contextAdded: "संदर्भ जोड़ा गया",
+        contextEmpty: "जानकारी जोड़ें",
+        profileSaved: "प्रोफ़ाइल सक्रिय",
+        editProfile: "संपादित करें",
+        wantPersonalized: "व्यक्तिगत मार्गदर्शन चाहते हैं?",
+        createProfile: "प्रोफ़ाइल बनाएं",
+        chatTitle: "MedGuide से पूछें",
+        welcomeTitle: "MedGuide में स्वागत है",
+        welcomeDesc: "कोई भी स्वास्थ्य प्रश्न पूछें।",
+        sug1: "दुष्प्रभाव?",
+        sug2: "इंटरैक्शन?",
+        sug3: "जीवनशैली टिप्स",
+        sug4: "डॉक्टर के प्रश्न",
+        chatPh: "स्वास्थ्य प्रश्न पूछें...",
+        chatDisclaimer: "केवल शैक्षिक।",
+        docTitle: "मेडिकल दस्तावेज़ समझाएं",
+        docPrivacy: "आपका दस्तावेज़ सुरक्षित रूप से संसाधित किया जाता है और तुरंत हटा दिया जाता है।",
+        uploadText: "अपलोड करने के लिए क्लिक करें या ड्रैग और ड्रॉप करें",
+        uploadTypes: "PDF, JPG या PNG (अधिकतम 10MB)",
+        analyzeBtn: "विश्लेषण",
+        analyzing: "विश्लेषण...",
+        disclaimerTitle: "केवल शैक्षिक जानकारी",
+        disclaimerText: "यह विश्लेषण केवल शैक्षिक उद्देश्यों के लिए है और चिकित्सा सलाह नहीं है।",
+        hospitalTitle: "अस्पताल खोजें",
+        emergencyText: "आपातकाल में 911 पर कॉल करें।",
+        locationLabel: "आपका स्थान",
+        locationPh: "शहर या पिन कोड दर्ज करें",
+        useLocation: "मेरा स्थान",
+        locating: "खोज रहे...",
+        radiusLabel: "खोज त्रिज्या",
+        radius5: "5 मील",
+        radius10: "10 मील",
+        radius25: "25 मील",
+        radius50: "50 मील",
+        searchBtn: "खोजें",
+        searching: "खोज रहे...",
+        noResults: "नहीं मिला।",
+        milesAway: "मील",
+        directions: "दिशाएं",
+        emergency: "आपातकालीन",
+        docHelpTitle: "मैं क्या अपलोड कर सकता हूं?",
+        docHelpText: "लैब रिपोर्ट, प्रिस्क्रिप्शन, डॉक्टर की टिप्पणी, डिस्चार्ज सारांश, इमेजिंग रिपोर्ट या कोई भी मेडिकल दस्तावेज़ अपलोड करें। MedGuide इसे सरल शब्दों में समझाएगा।",
+        phMedications: "उदा., लिसिनोप्रिल 10mg, मेटफॉर्मिन 500mg",
+        phSupplements: "उदा., विटामिन डी, फिश ऑयल",
+        phConditions: "उदा., उच्च रक्तचाप, मधुमेह",
+        phSymptoms: "उदा., चक्कर आना, थकान",
+        phAllergies: "उदा., मूंगफली, शेलफिश, डेयरी",
+        condDiabetes: "मधुमेह",
+        condHypertension: "उच्च रक्तचाप",
+        condHeart: "हृदय रोग",
+        condKidney: "गुर्दे की बीमारी",
+        condThyroid: "थायराइड समस्याएं",
+        condArthritis: "गठिया",
+        condAsthma: "अस्थमा/COPD",
+        condDepression: "अवसाद/चिंता",
+        priPain: "दर्द प्रबंधन",
+        priEnergy: "ऊर्जा सुधार",
+        priSleep: "बेहतर नींद",
+        priWeight: "वजन प्रबंधन",
+        priMental: "मानसिक स्वास्थ्य",
+        priSideEffects: "दुष्प्रभाव कम करें",
+        footer: "MedGuide एक शैक्षिक उपकरण है।",
+        onbWelcomeTitle: "MedGuide में आपका स्वागत है",
+        onbWelcomeDesc: "अपनी पृष्ठभूमि, जीवनशैली और स्वास्थ्य प्राथमिकताओं के अनुसार व्यक्तिगत स्वास्थ्य मार्गदर्शन प्राप्त करें।",
+        onbTime: "लगभग 3-5 मिनट लगते हैं",
+        onbStart: "शुरू करें",
+        onbSkip: "छोड़ें",
+        onbBack: "पीछे",
+        onbNext: "अगला",
+        onbComplete: "पूर्ण करें",
+        onbStep1Title: "आपके बारे में",
+        onbStep1Desc: "अधिक प्रासंगिक मार्गदर्शन के लिए हमें अपनी पृष्ठभूमि समझने में मदद करें।",
+        onbAgeLabel: "आयु सीमा",
+        onbGenderLabel: "जैविक लिंग",
+        onbEthnicityLabel: "जातीय पृष्ठभूमि (वैकल्पिक)",
+        onbStep2Title: "आहार और जीवनशैली",
+        onbStep2Desc: "यह हमें भोजन-दवा इंटरैक्शन पर विचार करने में मदद करता है।",
+        onbDietLabel: "आहार पैटर्न",
+        onbAllergiesLabel: "खाद्य एलर्जी",
+        onbAlcoholLabel: "शराब का सेवन",
+        onbSmokingLabel: "धूम्रपान स्थिति",
+        onbStep3Title: "स्वास्थ्य स्थिति",
+        onbStep3Desc: "सटीक मार्गदर्शन के लिए वर्तमान स्वास्थ्य जानकारी।",
+        onbConditionsLabel: "स्वास्थ्य स्थितियां",
+        onbMobilityLabel: "गतिशीलता स्तर",
+        onbStep4Title: "आपकी स्वास्थ्य प्राथमिकताएं",
+        onbStep4Desc: "आपके लिए सबसे महत्वपूर्ण क्या है?",
+        onbPrioritiesLabel: "अपनी प्राथमिकताएं चुनें",
+        onbGoalsLabel: "स्वास्थ्य लक्ष्य (वैकल्पिक)",
+        stepOf: "चरण",
+        of: "का",
+        optFemale: "महिला",
+        optMale: "पुरुष",
+        optOther: "अन्य/बताना नहीं चाहते",
+        optPreferNotSay: "बताना नहीं चाहते",
+        optAfrican: "अफ्रीकी",
+        optAsian: "एशियाई",
+        optCaucasian: "कोकेशियान/श्वेत",
+        optHispanic: "हिस्पैनिक/लातीनी",
+        optMixed: "मिश्रित",
+        optOtherEth: "अन्य",
+        optRegular: "सामान्य/कोई प्रतिबंध नहीं",
+        optVegetarian: "शाकाहारी",
+        optVegan: "शुद्ध शाकाहारी",
+        optHalal: "हलाल",
+        optKosher: "कोशर",
+        optGlutenFree: "ग्लूटेन-मुक्त",
+        optNone: "कोई नहीं",
+        optOccasional: "कभी-कभी",
+        optModerate: "मध्यम",
+        optDaily: "रोज़ाना",
+        optNever: "कभी नहीं पिया",
+        optFormer: "पूर्व धूम्रपानी",
+        optCurrent: "वर्तमान धूम्रपानी",
+        optFullMobile: "पूर्ण गतिशील",
+        optLimited: "कुछ सीमाएं",
+        optAssistive: "सहायक उपकरण का उपयोग"
+    }
+};
+
+// =====================================================
+// LANGUAGE CHANGE FUNCTION - TRANSLATES EVERYTHING
+// =====================================================
+function changeLanguage(lang) {
+    currentLang = lang;
+    var t = T[lang] || T.en;
+    
+    // Splash
+    if (document.getElementById('splashSubtitle')) {
+        document.getElementById('splashSubtitle').textContent = t.splashSubtitle || t.subtitle;
+    }
+    
+    // Header
+    document.getElementById('subtitle').textContent = t.subtitle;
+    
+    // Tabs
+    document.getElementById('tabHealthText').textContent = t.tabHealth;
+    document.getElementById('tabDocText').textContent = t.tabDoc;
+    document.getElementById('tabHospitalText').textContent = t.tabHospital;
+    
+    // Context Panel
+    document.getElementById('contextTitle').textContent = t.contextTitle;
+    document.getElementById('contextSubtitle').textContent = t.contextSubtitle;
+    document.getElementById('lblMedications').textContent = t.lblMedications;
+    document.getElementById('lblSupplements').textContent = t.lblSupplements;
+    document.getElementById('lblConditions').textContent = t.lblConditions;
+    document.getElementById('lblSymptoms').textContent = t.lblSymptoms;
+    document.getElementById('lblAgeRange').textContent = t.lblAgeRange;
+    
+    // Placeholders
+    if (t.phMedications) document.getElementById('medications').placeholder = t.phMedications;
+    if (t.phSupplements) document.getElementById('supplements').placeholder = t.phSupplements;
+    if (t.phConditions) document.getElementById('conditions').placeholder = t.phConditions;
+    if (t.phSymptoms) document.getElementById('symptoms').placeholder = t.phSymptoms;
+    if (t.phAllergies) document.getElementById('profileAllergies').placeholder = t.phAllergies;
+
+    // Profile Banners
+    document.getElementById('profileBannerText').textContent = t.profileSaved;
+    document.getElementById('editProfileBtn').textContent = t.editProfile;
+    document.getElementById('createProfileText').textContent = t.wantPersonalized;
+    document.getElementById('createProfileBtn').textContent = t.createProfile;
+    
+    // Chat
+    document.getElementById('chatTitle').textContent = t.chatTitle;
+    document.getElementById('welcomeTitle').textContent = t.welcomeTitle;
+    document.getElementById('welcomeDesc').textContent = t.welcomeDesc;
+    document.getElementById('sug1').textContent = t.sug1;
+    document.getElementById('sug2').textContent = t.sug2;
+    document.getElementById('sug3').textContent = t.sug3;
+    document.getElementById('sug4').textContent = t.sug4;
+    document.getElementById('chatInput').placeholder = t.chatPh || t.chatPlaceholder || "Ask a question...";
+    document.getElementById('chatDisclaimer').textContent = t.chatDisclaimer;
+    
+    // Document Tab
+    document.getElementById('docTitle').textContent = t.docTitle || T.en.docTitle;
+    if (document.getElementById('docPrivacy')) document.getElementById('docPrivacy').textContent = t.docPrivacy || T.en.docPrivacy;
+    if (document.getElementById('docHelpTitle')) document.getElementById('docHelpTitle').textContent = t.docHelpTitle || T.en.docHelpTitle;
+    if (document.getElementById('docHelpText')) document.getElementById('docHelpText').textContent = t.docHelpText || T.en.docHelpText;
+    document.getElementById('uploadText').textContent = t.uploadText || T.en.uploadText;
+    if (document.getElementById('uploadTypes')) document.getElementById('uploadTypes').textContent = t.uploadTypes || T.en.uploadTypes;
+    document.getElementById('analyzeBtn').textContent = t.analyzeBtn || T.en.analyzeBtn;
+    if (document.getElementById('disclaimerTitle')) document.getElementById('disclaimerTitle').textContent = t.disclaimerTitle || T.en.disclaimerTitle;
+    if (document.getElementById('disclaimerText')) document.getElementById('disclaimerText').textContent = t.disclaimerText || T.en.disclaimerText;
+    
+    // Hospital Tab
+    document.getElementById('hospitalTitle').textContent = t.hospitalTitle || T.en.hospitalTitle;
+    document.getElementById('emergencyText').innerHTML = "<strong>" + (t.emergencyText || T.en.emergencyText) + "</strong>";
+    if (document.getElementById('locationLabel')) document.getElementById('locationLabel').textContent = t.locationLabel || T.en.locationLabel;
+    document.getElementById('locationInput').placeholder = t.locationPh || T.en.locationPh;
+    document.getElementById('locateBtnText').textContent = t.useLocation || T.en.useLocation;
+    if (document.getElementById('radiusLabel')) document.getElementById('radiusLabel').textContent = t.radiusLabel || T.en.radiusLabel;
+    
+    // Radius dropdown options
+    if (document.getElementById('radius5')) document.getElementById('radius5').textContent = t.radius5 || "5 miles";
+    if (document.getElementById('radius10')) document.getElementById('radius10').textContent = t.radius10 || "10 miles";
+    if (document.getElementById('radius25')) document.getElementById('radius25').textContent = t.radius25 || "25 miles";
+    if (document.getElementById('radius50')) document.getElementById('radius50').textContent = t.radius50 || "50 miles";
+    
+    document.getElementById('searchBtn').textContent = t.searchBtn;
+    
+    // Footer
+    document.getElementById('footerText').textContent = t.footer;
+    
+    // Onboarding
+    document.getElementById('onbWelcomeTitle').textContent = t.onbWelcomeTitle || T.en.onbWelcomeTitle;
+    document.getElementById('onbWelcomeDesc').textContent = t.onbWelcomeDesc || T.en.onbWelcomeDesc;
+    if (document.getElementById('onbTime')) document.getElementById('onbTime').textContent = t.onbTime || T.en.onbTime;
+    document.getElementById('onbStartBtn').textContent = t.onbStart || T.en.onbStart;
+    document.getElementById('onbSkipBtn').textContent = t.onbSkip || T.en.onbSkip;
+    if (document.getElementById('onbStep1Title')) document.getElementById('onbStep1Title').textContent = t.onbStep1Title || T.en.onbStep1Title;
+    if (document.getElementById('onbStep1Desc')) document.getElementById('onbStep1Desc').textContent = t.onbStep1Desc || T.en.onbStep1Desc;
+    if (document.getElementById('onbAgeLabel')) document.getElementById('onbAgeLabel').textContent = t.onbAgeLabel || T.en.onbAgeLabel;
+    if (document.getElementById('onbGenderLabel')) document.getElementById('onbGenderLabel').textContent = t.onbGenderLabel || T.en.onbGenderLabel;
+    if (document.getElementById('onbEthnicityLabel')) document.getElementById('onbEthnicityLabel').textContent = t.onbEthnicityLabel || T.en.onbEthnicityLabel;
+    if (document.getElementById('onbStep2Title')) document.getElementById('onbStep2Title').textContent = t.onbStep2Title || T.en.onbStep2Title;
+    if (document.getElementById('onbStep2Desc')) document.getElementById('onbStep2Desc').textContent = t.onbStep2Desc || T.en.onbStep2Desc;
+    if (document.getElementById('onbDietLabel')) document.getElementById('onbDietLabel').textContent = t.onbDietLabel || T.en.onbDietLabel;
+    if (document.getElementById('onbAllergiesLabel')) document.getElementById('onbAllergiesLabel').textContent = t.onbAllergiesLabel || T.en.onbAllergiesLabel;
+    if (document.getElementById('onbAlcoholLabel')) document.getElementById('onbAlcoholLabel').textContent = t.onbAlcoholLabel || T.en.onbAlcoholLabel;
+    if (document.getElementById('onbSmokingLabel')) document.getElementById('onbSmokingLabel').textContent = t.onbSmokingLabel || T.en.onbSmokingLabel;
+    if (document.getElementById('onbStep3Title')) document.getElementById('onbStep3Title').textContent = t.onbStep3Title || T.en.onbStep3Title;
+    if (document.getElementById('onbStep3Desc')) document.getElementById('onbStep3Desc').textContent = t.onbStep3Desc || T.en.onbStep3Desc;
+    if (document.getElementById('onbConditionsLabel')) document.getElementById('onbConditionsLabel').textContent = t.onbConditionsLabel || T.en.onbConditionsLabel;
+    if (document.getElementById('onbMobilityLabel')) document.getElementById('onbMobilityLabel').textContent = t.onbMobilityLabel || T.en.onbMobilityLabel;
+    if (document.getElementById('onbStep4Title')) document.getElementById('onbStep4Title').textContent = t.onbStep4Title || T.en.onbStep4Title;
+    if (document.getElementById('onbStep4Desc')) document.getElementById('onbStep4Desc').textContent = t.onbStep4Desc || T.en.onbStep4Desc;
+    if (document.getElementById('onbPrioritiesLabel')) document.getElementById('onbPrioritiesLabel').textContent = t.onbPrioritiesLabel || T.en.onbPrioritiesLabel;
+    if (document.getElementById('onbGoalsLabel')) document.getElementById('onbGoalsLabel').textContent = t.onbGoalsLabel || T.en.onbGoalsLabel;
+    document.getElementById('onbBackBtn').textContent = t.onbBack || T.en.onbBack;
+    document.getElementById('onbNextBtn').textContent = t.onbNext || T.en.onbNext;
+    document.getElementById('onbCompleteBtn').textContent = t.onbComplete || T.en.onbComplete;
+    
+    // Conditions checkboxes
+    if (t.condDiabetes && document.getElementById('condDiabetes')) document.getElementById('condDiabetes').textContent = t.condDiabetes;
+    if (t.condHypertension && document.getElementById('condHypertension')) document.getElementById('condHypertension').textContent = t.condHypertension;
+    if (t.condHeart && document.getElementById('condHeart')) document.getElementById('condHeart').textContent = t.condHeart;
+    if (t.condKidney && document.getElementById('condKidney')) document.getElementById('condKidney').textContent = t.condKidney;
+    if (t.condThyroid && document.getElementById('condThyroid')) document.getElementById('condThyroid').textContent = t.condThyroid;
+    if (t.condArthritis && document.getElementById('condArthritis')) document.getElementById('condArthritis').textContent = t.condArthritis;
+    if (t.condAsthma && document.getElementById('condAsthma')) document.getElementById('condAsthma').textContent = t.condAsthma;
+    if (t.condDepression && document.getElementById('condDepression')) document.getElementById('condDepression').textContent = t.condDepression;
+    
+    // Priorities checkboxes
+    if (t.priPain && document.getElementById('priPain')) document.getElementById('priPain').textContent = t.priPain;
+    if (t.priEnergy && document.getElementById('priEnergy')) document.getElementById('priEnergy').textContent = t.priEnergy;
+    if (t.priSleep && document.getElementById('priSleep')) document.getElementById('priSleep').textContent = t.priSleep;
+    if (t.priWeight && document.getElementById('priWeight')) document.getElementById('priWeight').textContent = t.priWeight;
+    if (t.priMental && document.getElementById('priMental')) document.getElementById('priMental').textContent = t.priMental;
+    if (t.priSideEffects && document.getElementById('priSideEffects')) document.getElementById('priSideEffects').textContent = t.priSideEffects;
+    
+    // Dropdown options - Gender
+    if (document.getElementById('optSelect')) document.getElementById('optSelect').textContent = t.optSelect || "Select...";
+    if (document.getElementById('optSelectAge')) document.getElementById('optSelectAge').textContent = t.optSelect || "Select...";
+    if (document.getElementById('optSelectGender')) document.getElementById('optSelectGender').textContent = t.optSelect || "Select...";
+    if (document.getElementById('optFemale')) document.getElementById('optFemale').textContent = t.optFemale || "Female";
+    if (document.getElementById('optMale')) document.getElementById('optMale').textContent = t.optMale || "Male";
+    if (document.getElementById('optOther')) document.getElementById('optOther').textContent = t.optOther || "Other/Prefer not to say";
+    
+    // Dropdown options - Ethnicity
+    if (document.getElementById('optPreferNotSay')) document.getElementById('optPreferNotSay').textContent = t.optPreferNotSay || "Prefer not to say";
+    if (document.getElementById('optAfrican')) document.getElementById('optAfrican').textContent = t.optAfrican || "African/African American";
+    if (document.getElementById('optAsian')) document.getElementById('optAsian').textContent = t.optAsian || "Asian";
+    if (document.getElementById('optCaucasian')) document.getElementById('optCaucasian').textContent = t.optCaucasian || "Caucasian/White";
+    if (document.getElementById('optHispanic')) document.getElementById('optHispanic').textContent = t.optHispanic || "Hispanic/Latino";
+    if (document.getElementById('optMixed')) document.getElementById('optMixed').textContent = t.optMixed || "Mixed/Multiple";
+    if (document.getElementById('optOtherEth')) document.getElementById('optOtherEth').textContent = t.optOtherEth || "Other";
+    
+    // Dropdown options - Diet
+    if (document.getElementById('optSelectDiet')) document.getElementById('optSelectDiet').textContent = t.optSelect || "Select...";
+    if (document.getElementById('optRegular')) document.getElementById('optRegular').textContent = t.optRegular || "Regular/No restrictions";
+    if (document.getElementById('optVegetarian')) document.getElementById('optVegetarian').textContent = t.optVegetarian || "Vegetarian";
+    if (document.getElementById('optVegan')) document.getElementById('optVegan').textContent = t.optVegan || "Vegan";
+    if (document.getElementById('optHalal')) document.getElementById('optHalal').textContent = t.optHalal || "Halal";
+    if (document.getElementById('optKosher')) document.getElementById('optKosher').textContent = t.optKosher || "Kosher";
+    if (document.getElementById('optGlutenFree')) document.getElementById('optGlutenFree').textContent = t.optGlutenFree || "Gluten-free";
+    
+    // Dropdown options - Alcohol
+    if (document.getElementById('optSelectAlcohol')) document.getElementById('optSelectAlcohol').textContent = t.optSelect || "Select...";
+    if (document.getElementById('optNone')) document.getElementById('optNone').textContent = t.optNone || "None";
+    if (document.getElementById('optOccasional')) document.getElementById('optOccasional').textContent = t.optOccasional || "Occasional";
+    if (document.getElementById('optModerate')) document.getElementById('optModerate').textContent = t.optModerate || "Moderate";
+    if (document.getElementById('optDaily')) document.getElementById('optDaily').textContent = t.optDaily || "Daily";
+    
+    // Dropdown options - Smoking
+    if (document.getElementById('optSelectSmoking')) document.getElementById('optSelectSmoking').textContent = t.optSelect || "Select...";
+    if (document.getElementById('optNever')) document.getElementById('optNever').textContent = t.optNever || "Never smoked";
+    if (document.getElementById('optFormer')) document.getElementById('optFormer').textContent = t.optFormer || "Former smoker";
+    if (document.getElementById('optCurrent')) document.getElementById('optCurrent').textContent = t.optCurrent || "Current smoker";
+    
+    // Dropdown options - Mobility
+    if (document.getElementById('optSelectMobility')) document.getElementById('optSelectMobility').textContent = t.optSelect || "Select...";
+    if (document.getElementById('optFullMobile')) document.getElementById('optFullMobile').textContent = t.optFullMobile || "Fully mobile";
+    if (document.getElementById('optLimited')) document.getElementById('optLimited').textContent = t.optLimited || "Some limitations";
+    if (document.getElementById('optAssistive')) document.getElementById('optAssistive').textContent = t.optAssistive || "Use assistive devices";
+    
+    // Update context status
+    updateContextStatus();
+    
+    // Update step indicator if visible
+    if (currentOnboardingStep > 0) {
+        document.getElementById('stepIndicator').textContent = t.stepOf + ' ' + currentOnboardingStep + ' ' + t.of + ' 4';
+    }
+}
+
+// =====================================================
+// PROFILE & ONBOARDING FUNCTIONS
+// =====================================================
+function checkSavedProfile() {
+    // Always show onboarding on page load for privacy - no data is saved between sessions
+    document.getElementById('onboardingOverlay').classList.remove('hidden');
+    document.getElementById('createProfileBanner').style.display = 'none';
+    document.getElementById('profileBanner').style.display = 'none';
+}
+
+function showOnboarding() {
+    currentOnboardingStep = 0;
+    updateOnboardingStep();
+    document.getElementById('onboardingOverlay').classList.remove('hidden');
+}
+
+function closeOnboarding() {
+    document.getElementById('onboardingOverlay').classList.add('hidden');
+    document.getElementById('createProfileBanner').style.display = 'flex';
+    document.getElementById('profileBanner').style.display = 'none';
+}
+
+function skipOnboarding() {
+    closeOnboarding();
+}
+
+function updateOnboardingStep() {
+    var steps = document.querySelectorAll('.onboarding-step');
+    for (var i = 0; i < steps.length; i++) {
+        steps[i].classList.remove('active');
+    }
+    document.getElementById('step' + currentOnboardingStep).classList.add('active');
+    
+    var progress = currentOnboardingStep === 0 ? 0 : (currentOnboardingStep / 4) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+    
+    var t = T[currentLang] || T.en;
+    if (currentOnboardingStep === 0) {
+        document.getElementById('stepIndicator').textContent = '';
+    } else {
+        document.getElementById('stepIndicator').textContent = t.stepOf + ' ' + currentOnboardingStep + ' ' + t.of + ' 4';
+    }
+}
+
+function nextStep() {
+    if (currentOnboardingStep < 4) {
+        currentOnboardingStep++;
+        updateOnboardingStep();
+    }
+}
+
+function prevStep() {
+    if (currentOnboardingStep > 0) {
+        currentOnboardingStep--;
+        updateOnboardingStep();
+    }
+}
+
+function completeOnboarding() {
+    userProfile = {
+        age: document.getElementById('profileAge').value,
+        gender: document.getElementById('profileGender').value,
+        ethnicity: document.getElementById('profileEthnicity').value,
+        diet: document.getElementById('profileDiet').value,
+        allergies: document.getElementById('profileAllergies').value,
+        alcohol: document.getElementById('profileAlcohol').value,
+        smoking: document.getElementById('profileSmoking').value,
+        mobility: document.getElementById('profileMobility').value,
+        goals: document.getElementById('profileGoals').value,
+        conditions: [],
+        priorities: []
+    };
+    
+    var conditionBoxes = document.querySelectorAll('#conditionsGroup input:checked');
+    for (var i = 0; i < conditionBoxes.length; i++) {
+        userProfile.conditions.push(conditionBoxes[i].value);
+    }
+    
+    var priorityBoxes = document.querySelectorAll('#prioritiesGroup input:checked');
+    for (var i = 0; i < priorityBoxes.length; i++) {
+        userProfile.priorities.push(priorityBoxes[i].value);
+    }
+    
+    // Profile kept in memory only - not saved to localStorage for privacy
+    
+    document.getElementById('onboardingOverlay').classList.add('hidden');
+    document.getElementById('profileBanner').style.display = 'flex';
+    document.getElementById('createProfileBanner').style.display = 'none';
+    
+    if (userProfile.age) {
+        document.getElementById('ageRange').value = userProfile.age;
+    }
+    
+    updateContextStatus();
+}
+
+// =====================================================
+// TAB & UI FUNCTIONS
+// =====================================================
+function switchTab(tabId) {
+    var contents = document.querySelectorAll('.tab-content');
+    var buttons = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < contents.length; i++) { contents[i].classList.remove('active'); }
+    for (var i = 0; i < buttons.length; i++) { buttons[i].classList.remove('active'); }
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
+function updateContextStatus() {
+    var t = T[currentLang] || T.en;
+    var hasContext = document.getElementById('medications').value.trim() || 
+                     document.getElementById('conditions').value.trim() || 
+                     document.getElementById('symptoms').value.trim();
+    var status = document.getElementById('contextStatus');
+    var text = document.getElementById('statusText');
+    if (hasContext) {
+        status.classList.add('active');
+        text.textContent = t.contextAdded;
+    } else {
+        status.classList.remove('active');
+        text.textContent = t.contextEmpty;
+    }
+}
+
+// =====================================================
+// CHAT FUNCTIONS
+// =====================================================
+function sendMessage() {
+    var input = document.getElementById('chatInput');
+    var msg = input.value.trim();
+    if (!msg) return;
+    
+    document.getElementById('chatWelcome').style.display = 'none';
+    addMessage(msg, 'user');
+    input.value = '';
+    showTyping();
+    
+    var context = {
+        medications: document.getElementById('medications').value,
+        supplements: document.getElementById('supplements').value,
+        conditions: document.getElementById('conditions').value,
+        symptoms: document.getElementById('symptoms').value,
+        ageRange: document.getElementById('ageRange').value,
+        language: currentLang,
+        profile: userProfile
+    };
+    
+    fetch('/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg, context: context})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        hideTyping();
+        addMessage(data.response || data.error || 'Error', 'assistant', data.is_crisis);
+    })
+    .catch(function(e) {
+        hideTyping();
+        addMessage('Connection error.', 'assistant');
+    });
+    
+    updateContextStatus();
+}
+
+function addMessage(text, role, isCrisis) {
+    var container = document.getElementById('chatMessages');
+    var div = document.createElement('div');
+    div.className = 'message ' + role;
+    var bubbleClass = isCrisis ? 'message-bubble crisis' : 'message-bubble';
+    var formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    div.innerHTML = '<div class="' + bubbleClass + '">' + formatted + '</div>' +
+                    '<div class="message-time">' + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + '</div>';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+    var container = document.getElementById('chatMessages');
+    var div = document.createElement('div');
+    div.id = 'typing';
+    div.className = 'typing-indicator';
+    div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideTyping() {
+    var t = document.getElementById('typing');
+    if (t) t.remove();
+}
+
+function askSuggestion(type) {
+    var questions = {
+        side: 'What are common side effects of my medications?',
+        interactions: 'Are there any interactions between my medications?',
+        lifestyle: 'What lifestyle changes can help with my condition?',
+        doctor: 'What questions should I ask my doctor?'
+    };
+    document.getElementById('chatInput').value = questions[type] || '';
+    sendMessage();
+}
+
+// =====================================================
+// DOCUMENT FUNCTIONS
+// =====================================================
+function handleFile(input) {
+    var file = input.files[0];
+    if (file) {
+        selectedFile = file;
+        document.getElementById('uploadText').textContent = file.name;
+        document.getElementById('uploadZone').classList.add('has-file');
+        document.getElementById('analyzeBtn').disabled = false;
+    }
+}
+
+function analyzeDoc() {
+    if (!selectedFile) return;
+    
+    var t = T[currentLang] || T.en;
+    var btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    btn.textContent = t.analyzing;
+    
+    var formData = new FormData();
+    formData.append('document', selectedFile);
+    formData.append('language', currentLang);
+    
+    fetch('/analyze-document', {method: 'POST', body: formData})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = t.analyzeBtn;
+        var results = document.getElementById('docResults');
+        if (data.error) {
+            results.innerHTML = '<div class="no-results">' + data.error + '</div>';
+        } else {
+            var a = data.analysis;
+            var html = '<div class="analysis-section"><h3>' + (t.docType || 'Document Type') + '</h3><p>' + (a.document_type || 'Document') + '</p></div>';
+            html += '<div class="analysis-section"><h3>' + (t.whatMeans || 'What This Means') + '</h3><p>' + (a.general_meaning || '') + '</p></div>';
+            results.innerHTML = html;
+        }
+    })
+    .catch(function(e) {
+        btn.disabled = false;
+        btn.textContent = t.analyzeBtn;
+        document.getElementById('docResults').innerHTML = '<div class="no-results">Error analyzing document.</div>';
+    });
+}
+
+// =====================================================
+// HOSPITAL FUNCTIONS
+// =====================================================
+function useMyLocation() {
+    var t = T[currentLang] || T.en;
+    var btn = document.getElementById('locateBtn');
+    var btnText = document.getElementById('locateBtnText');
+    
+    if (!navigator.geolocation) {
+        alert('Geolocation not supported');
+        return;
+    }
+    
+    btn.disabled = true;
+    btnText.textContent = t.locating;
+    
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            // Put coordinates in the input field
+            document.getElementById('locationInput').value = pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4);
+            btn.disabled = false;
+            btnText.textContent = t.useLocation;
+            // Auto-search after getting location
+            searchHospitals();
+        },
+        function(err) {
+            alert('Location error: ' + err.message);
+            btn.disabled = false;
+            btnText.textContent = t.useLocation;
+        },
+        {enableHighAccuracy: true, timeout: 10000}
+    );
+}
+
+function searchHospitals() {
+    var t = T[currentLang] || T.en;
+    var locationInput = document.getElementById('locationInput').value.trim();
+    var radius = document.getElementById('radiusSelect').value;
+    var results = document.getElementById('hospitalResults');
+    var btn = document.getElementById('searchBtn');
+    
+    if (!locationInput) {
+        alert(t.enterLocation || 'Please enter a location');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = t.searching;
+    results.innerHTML = '<div class="no-results"><div style="display:flex;justify-content:center;gap:4px;padding:1rem;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>' + t.searching + '</div>';
+    
+    // Check if input looks like coordinates (from "Use My Location")
+    var coordsMatch = locationInput.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+    
+    if (coordsMatch) {
+        // User is using coordinates directly (from Use My Location button)
+        var lat = parseFloat(coordsMatch[1]);
+        var lon = parseFloat(coordsMatch[2]);
+        fetchHospitals(lat, lon, radius);
+    } else {
+        // User typed a location - geocode it
+        fetch('/geocode?location=' + encodeURIComponent(locationInput))
+        .then(function(r) { 
+            if (!r.ok) {
+                return r.json().then(function(data) {
+                    throw new Error(data.error || 'Location not found');
+                });
+            }
+            return r.json(); 
+        })
+        .then(function(data) {
+            if (data.error) {
+                results.innerHTML = '<div class="no-results">' + data.error + '</div>';
+                btn.disabled = false;
+                btn.textContent = t.searchBtn;
+            } else {
+                fetchHospitals(data.lat, data.lon, radius);
+            }
+        })
+        .catch(function(e) {
+            results.innerHTML = '<div class="no-results">' + (e.message || 'Error finding location. Please try again.') + '</div>';
+            btn.disabled = false;
+            btn.textContent = t.searchBtn;
+        });
+    }
+}
+
+function fetchHospitals(lat, lon, radius) {
+    var t = T[currentLang] || T.en;
+    var results = document.getElementById('hospitalResults');
+    var btn = document.getElementById('searchBtn');
+    
+    fetch('/hospitals?lat=' + lat + '&lon=' + lon + '&radius=' + radius, {
+        method: 'GET',
+        headers: {'Accept': 'application/json'}
+    })
+    .then(function(r) { 
+        if (!r.ok) {
+            throw new Error('Server error: ' + r.status);
+        }
+        return r.json(); 
+    })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = t.searchBtn;
+        
+        if (data.error) {
+            results.innerHTML = '<div class="no-results">' + data.error + '</div>';
+            return;
+        }
+        
+        if (!data.hospitals || data.hospitals.length === 0) {
+            results.innerHTML = '<div class="no-results">' + t.noResults + '</div>';
+            return;
+        }
+        
+        var html = '';
+        for (var i = 0; i < data.hospitals.length; i++) {
+            var h = data.hospitals[i];
+            html += '<div class="hospital-card' + (h.emergency ? ' emergency' : '') + '">';
+            html += '<div class="hospital-name">' + h.name;
+            if (h.emergency) html += '<span class="emergency-badge">' + t.emergency + '</span>';
+            html += '</div>';
+            if (h.address || h.city) {
+                html += '<div class="hospital-info">' + [h.address, h.city].filter(Boolean).join(', ') + '</div>';
+            }
+            html += '<div class="hospital-distance">' + h.distance + ' ' + t.milesAway + '</div>';
+            html += '<div class="hospital-actions">';
+            if (h.phone) html += '<a href="tel:' + h.phone + '">' + h.phone + '</a>';
+            html += '<a href="https://www.google.com/maps/dir/?api=1&destination=' + h.lat + ',' + h.lon + '" target="_blank">' + t.directions + '</a>';
+            html += '</div></div>';
+        }
+        results.innerHTML = html;
+    })
+    .catch(function(e) {
+        console.error('Hospital search error:', e);
+        btn.disabled = false;
+        btn.textContent = t.searchBtn;
+        results.innerHTML = '<div class="no-results">Unable to search hospitals. Make sure the server is running.</div>';
+    });
+}
+
+// =====================================================
+// INITIALIZATION
+// =====================================================
+document.getElementById('medications').addEventListener('input', updateContextStatus);
+document.getElementById('conditions').addEventListener('input', updateContextStatus);
+document.getElementById('symptoms').addEventListener('input', updateContextStatus);
+
+// Hide splash and check profile
+setTimeout(function() {
+    var splash = document.getElementById('splashScreen');
+    splash.classList.add('fade-out');
+    setTimeout(function() {
+        splash.style.display = 'none';
+        checkSavedProfile();
+    }, 500);
+}, 1500);
+</script>
+</body>
+</html>
