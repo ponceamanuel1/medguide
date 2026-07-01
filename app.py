@@ -3,6 +3,7 @@ MedGuide - Health Understanding Assistant
 Complete Flask backend with chat, hospital search, and document analysis
 """
 
+import requests
 import re
 import os
 import tempfile
