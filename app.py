@@ -3,42 +3,54 @@ MedGuide - Health Understanding Assistant
 Complete Flask backend with chat, hospital search, and document analysis
 """
 
-import requests
 import re
 import os
 import tempfile
 import json
+import anthropic
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+from supabase import create_client, Client
 
 # Configuration
-OLLAMA_URL = "http://localhost:11434/api/chat"
-OLLAMA_MODEL = "llama3.1"
+# Configuration
 UPLOAD_FOLDER = tempfile.gettempdir()
 MAX_CONTENT_LENGTH = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 
 app = Flask(__name__)
+
+load_dotenv()
+
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+
+if not supabase_url or not supabase_key:
+    raise ValueError("Missing Supabase information in .env")
+
+supabase: Client = create_client(
+    supabase_url,
+    supabase_key
+)
+
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 def ollama_chat(system_prompt, user_prompt):
     try:
-        payload = {
-            "model": OLLAMA_MODEL,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "stream": False,
-        }
-        r = requests.post(OLLAMA_URL, json=payload, timeout=180)
-        r.raise_for_status()
-        return r.json()["message"]["content"]
+        message = anthropic_client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            system=system_prompt,
+            messages=[
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+        return message.content[0].text
     except Exception as e:
-        print(f"Ollama error: {e}")
+        print(f"Anthropic error: {e}")
         return None
 
 # Crisis keywords in all 10 languages
@@ -77,6 +89,17 @@ CRISIS_KEYWORDS = [
     # Hindi
     "आत्महत्या", "मरना चाहता", "जीना नहीं चाहता", "खुद को मारना",
     "जीने का कोई कारण नहीं", "आत्म-हानि"
+]
+
+MEDICAL_EMERGENCY_KEYWORDS = [
+    "chest pain", "chest pains", "heart attack", "having a heart attack",
+    "can't breathe", "cannot breathe", "trouble breathing", "stopped breathing",
+    "not breathing", "stroke", "having a stroke", "face drooping", "arm weakness",
+    "severe bleeding", "bleeding out", "won't stop bleeding",
+    "unconscious", "passed out", "unresponsive",
+    "overdose", "took too many pills", "swallowed too much",
+    "allergic reaction", "throat closing", "anaphylaxis",
+    "seizure", "having a seizure",
 ]
 
 CRISIS_RESPONSES = {
@@ -220,12 +243,143 @@ Você importa. Sua vida tem valor. E há pessoas prontas para apoiá-lo/a.""",
 
 आप महत्वपूर्ण हैं। आपके जीवन का मूल्य है। और ऐसे लोग हैं जो आपका साथ देने के लिए तैयार हैं।"""
 }
+MEDICAL_EMERGENCY_RESPONSES = {
+    'en': """🚨 **This sounds like a medical emergency. Call 911 immediately.**
+
+Do not wait — call **911** right now or have someone nearby call for you.
+
+**While waiting for help:**
+- Stay as calm as possible
+- Don't eat or drink anything
+- Unlock your door if you can so paramedics can get in
+- Stay on the phone with the 911 operator — they will guide you
+
+**If someone is unconscious and not breathing:** start CPR if you know how. The 911 operator can walk you through it.
+
+MedGuide is an educational tool and cannot provide emergency medical care. **Call 911 now.**""",
+
+    'es': """🚨 **Esto suena como una emergencia médica. Llama al 911 inmediatamente.**
+
+No esperes — llama al **911** ahora mismo o pide a alguien cercano que llame.
+
+**Mientras esperas ayuda:**
+- Mantén la calma
+- No comas ni bebas nada
+- Desbloquea tu puerta si puedes para que los paramédicos puedan entrar
+- Permanece en el teléfono con el operador del 911
+
+**Llama al 911 ahora.**""",
+
+    'zh': """🚨 **这听起来像是医疗紧急情况。请立即拨打911。**
+
+不要等待——现在就拨打**911**，或让附近的人帮您拨打。
+
+**等待救援时：**
+- 尽量保持冷静
+- 不要吃喝任何东西
+- 如果可以，解锁门让急救人员进入
+- 保持与911接线员通话
+
+**请立即拨打911。**""",
+
+    'fr': """🚨 **Cela ressemble à une urgence médicale. Appelez le 911 immédiatement.**
+
+N'attendez pas — appelez le **911** maintenant ou demandez à quelqu'un nearby d'appeler.
+
+**En attendant les secours:**
+- Restez aussi calme que possible
+- Ne mangez ni ne buvez rien
+- Déverrouillez votre porte si vous pouvez
+- Restez en ligne avec l'opérateur du 911
+
+**Appelez le 911 maintenant.**""",
+
+    'de': """🚨 **Das klingt nach einem medizinischen Notfall. Rufen Sie sofort 911 an.**
+
+Warten Sie nicht — rufen Sie jetzt **911** an oder bitten Sie jemanden in der Nähe.
+
+**Während Sie auf Hilfe warten:**
+- Bleiben Sie so ruhig wie möglich
+- Essen oder trinken Sie nichts
+- Entsperren Sie Ihre Tür wenn möglich
+- Bleiben Sie in der Leitung mit dem 911-Operator
+
+**Rufen Sie jetzt 911 an.**""",
+
+    'pt': """🚨 **Isso parece uma emergência médica. Ligue para o 911 imediatamente.**
+
+Não espere — ligue para o **911** agora ou peça a alguém próximo que ligue.
+
+**Enquanto aguarda ajuda:**
+- Fique o mais calmo possível
+- Não coma nem beba nada
+- Desbloqueie sua porta se puder
+- Fique na linha com o operador do 911
+
+**Ligue para o 911 agora.**""",
+
+    'ja': """🚨 **これは医療緊急事態のようです。今すぐ911に電話してください。**
+
+待たないでください — 今すぐ**911**に電話するか、近くにいる人に電話してもらってください。
+
+**助けを待つ間：**
+- できるだけ落ち着いてください
+- 何も食べたり飲んだりしないでください
+- できればドアのロックを解除してください
+- 911のオペレーターと電話を続けてください
+
+**今すぐ911に電話してください。**""",
+
+    'ko': """🚨 **의료 응급 상황인 것 같습니다. 즉시 911에 전화하세요.**
+
+기다리지 마세요 — 지금 바로 **911**에 전화하거나 근처 사람에게 전화를 부탁하세요.
+
+**도움을 기다리는 동안:**
+- 최대한 침착하게 있으세요
+- 아무것도 먹거나 마시지 마세요
+- 가능하면 문을 잠금 해제하세요
+- 911 교환원과 통화를 유지하세요
+
+**지금 바로 911에 전화하세요.**""",
+
+    'ar': """🚨 **يبدو هذا حالة طوارئ طبية. اتصل بـ 911 فوراً.**
+
+لا تنتظر — اتصل بـ **911** الآن أو اطلب من شخص قريب الاتصال.
+
+**أثناء انتظار المساعدة:**
+- ابق هادئاً قدر الإمكان
+- لا تأكل أو تشرب أي شيء
+- افتح باب منزلك إذا استطعت
+- ابق على الهاتف مع مشغل 911
+
+**اتصل بـ 911 الآن.**""",
+
+    'hi': """🚨 **यह एक चिकित्सा आपातकाल लगता है। तुरंत 911 पर कॉल करें।**
+
+प्रतीक्षा न करें — अभी **911** पर कॉल करें या पास के किसी व्यक्ति से कॉल करवाएं।
+
+**मदद का इंतजार करते समय:**
+- जितना हो सके शांत रहें
+- कुछ भी न खाएं या पिएं
+- अगर हो सके तो दरवाजा खोल दें
+- 911 ऑपरेटर से फोन पर जुड़े रहें
+
+**अभी 911 पर कॉल करें।**"""
+}
 
 def check_crisis(text, language='en'):
     text_lower = text.lower()
+    
+    # Check medical emergencies first
+    for keyword in MEDICAL_EMERGENCY_KEYWORDS:
+        if keyword in text_lower:
+            return True, MEDICAL_EMERGENCY_RESPONSES.get(language, MEDICAL_EMERGENCY_RESPONSES['en'])
+    
+    # Then check mental health crisis keywords
     for keyword in CRISIS_KEYWORDS:
         if keyword in text_lower:
             return True, CRISIS_RESPONSES.get(language, CRISIS_RESPONSES['en'])
+    
     return False, None
 
 def get_system_prompt(language='en'):
@@ -272,6 +426,55 @@ TONE: Warm, supportive, conversational - like a knowledgeable friend who cares."
 def index():
     return render_template("index.html")
 
+@app.route('/save-profile', methods=['POST'])
+def save_profile():
+    """Saves a completed onboarding profile to Supabase and returns its ID."""
+    try:
+        data = request.json or {}
+
+        result = supabase.table("profiles").insert({
+            "age_range": data.get("age", ""),
+            "gender": data.get("gender", ""),
+            "ethnicity": data.get("ethnicity", ""),
+            "diet": data.get("diet", ""),
+            "allergies": data.get("allergies", ""),
+            "alcohol": data.get("alcohol", ""),
+            "smoking": data.get("smoking", ""),
+            "mobility": data.get("mobility", ""),
+            "goals": data.get("goals", ""),
+            "conditions": data.get("conditions", []),
+            "priorities": data.get("priorities", []),
+            "language": data.get("language", "en"),
+        }).execute()
+
+        profile_id = result.data[0]["id"] if result.data else None
+        return jsonify({"success": True, "profile_id": profile_id})
+
+    except Exception as e:
+        print(f"Save profile error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/save-message', methods=['POST'])
+def save_message():
+    """Logs a single chat message (user or assistant) to Supabase."""
+    try:
+        data = request.json or {}
+
+        supabase.table("chat_messages").insert({
+            "profile_id": data.get("profile_id"),
+            "role": data.get("role"),
+            "content": data.get("content", ""),
+            "is_crisis": data.get("is_crisis", False),
+            "language": data.get("language", "en"),
+        }).execute()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print(f"Save message error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
@@ -285,6 +488,27 @@ def chat():
         
         is_crisis, crisis_response = check_crisis(message, language)
         if is_crisis:
+            profile_id = context.get('profile_id')
+            if profile_id:
+                try:
+                    supabase.table("chat_messages").insert([
+                        {
+                            "profile_id": profile_id,
+                            "role": "user",
+                            "content": message,
+                            "is_crisis": True,
+                            "language": language,
+                        },
+                        {
+                            "profile_id": profile_id,
+                            "role": "assistant",
+                            "content": crisis_response,
+                            "is_crisis": True,
+                            "language": language,
+                        },
+                    ]).execute()
+                except Exception as log_err:
+                    print(f"Crisis logging error (non-fatal): {log_err}")
             return jsonify({'response': crisis_response, 'is_crisis': True})
         
         # Build context from form fields
@@ -317,6 +541,27 @@ def chat():
         
         response = ollama_chat(get_system_prompt(language), user_prompt)
         if response:
+            profile_id = context.get('profile_id')
+            if profile_id:
+                try:
+                    supabase.table("chat_messages").insert([
+                        {
+                            "profile_id": profile_id,
+                            "role": "user",
+                            "content": message,
+                            "is_crisis": False,
+                            "language": language,
+                        },
+                        {
+                            "profile_id": profile_id,
+                            "role": "assistant",
+                            "content": response,
+                            "is_crisis": False,
+                            "language": language,
+                        },
+                    ]).execute()
+                except Exception as log_err:
+                    print(f"Chat logging error (non-fatal): {log_err}")
             return jsonify({'response': response})
         return jsonify({'error': 'Unable to get response'}), 500
             

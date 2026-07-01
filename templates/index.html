@@ -1161,6 +1161,7 @@ var currentLang = "en";
 var selectedFile = null;
 var currentOnboardingStep = 0;
 var userProfile = null;
+var currentProfileId = null;
 
 // =====================================================
 // COMPLETE TRANSLATIONS - ALL 10 LANGUAGES
@@ -2870,12 +2871,12 @@ function sendMessage() {
     var input = document.getElementById('chatInput');
     var msg = input.value.trim();
     if (!msg) return;
-    
+
     document.getElementById('chatWelcome').style.display = 'none';
     addMessage(msg, 'user');
     input.value = '';
     showTyping();
-    
+
     var context = {
         medications: document.getElementById('medications').value,
         supplements: document.getElementById('supplements').value,
@@ -2883,9 +2884,10 @@ function sendMessage() {
         symptoms: document.getElementById('symptoms').value,
         ageRange: document.getElementById('ageRange').value,
         language: currentLang,
-        profile: userProfile
+        profile: userProfile,
+        profile_id: currentProfileId
     };
-    
+
     fetch('/chat', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -2900,7 +2902,7 @@ function sendMessage() {
         hideTyping();
         addMessage('Connection error.', 'assistant');
     });
-    
+
     updateContextStatus();
 }
 
