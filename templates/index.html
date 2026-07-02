@@ -745,6 +745,50 @@
         .checkbox-item span {
             line-height: 1.3;
         }
+        /* Insurance Badges */
+        .insurance-badge {
+            display: inline-block;
+            padding: 0.25rem 0.65rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .insurance-likely {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        .insurance-verify {
+            background: #fefce8;
+            color: #854d0e;
+            border: 1px solid #fde047;
+        }
+
+        /* Insurance Filter Bar */
+        .insurance-filter {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.5rem;
+            padding: 0.65rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: #1e40af;
+        }
+        .insurance-toggle {
+            background: #1e3a8a;
+            color: #fff;
+            border: none;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .insurance-toggle:hover { background: #1e40af; }
     </style>
 </head>
 <body>
@@ -837,50 +881,72 @@
             </div>
             
             <!-- Step 2 -->
-            <div class="onboarding-step" id="step2">
-                <h2 id="onbStep2Title">Diet & Lifestyle</h2>
-                <p id="onbStep2Desc">This helps us consider food-drug interactions.</p>
-                <div class="form-group">
-                    <label id="onbDietLabel">Dietary Pattern</label>
-                    <select id="profileDiet">
-                        <option value="" id="optSelectDiet">Select...</option>
-                        <option value="regular" id="optRegular">Regular/No restrictions</option>
-                        <option value="vegetarian" id="optVegetarian">Vegetarian</option>
-                        <option value="vegan" id="optVegan">Vegan</option>
-                        <option value="halal" id="optHalal">Halal</option>
-                        <option value="kosher" id="optKosher">Kosher</option>
-                        <option value="glutenfree" id="optGlutenFree">Gluten-free</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label id="onbAllergiesLabel">Food Allergies</label>
-                    <input type="text" id="profileAllergies" placeholder="e.g., peanuts, shellfish, dairy">
-                </div>
-                <div class="form-group">
-                    <label id="onbAlcoholLabel">Alcohol Use</label>
-                    <select id="profileAlcohol">
-                        <option value="" id="optSelectAlcohol">Select...</option>
-                        <option value="none" id="optNone">None</option>
-                        <option value="occasional" id="optOccasional">Occasional</option>
-                        <option value="moderate" id="optModerate">Moderate</option>
-                        <option value="daily" id="optDaily">Daily</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label id="onbSmokingLabel">Smoking Status</label>
-                    <select id="profileSmoking">
-                        <option value="" id="optSelectSmoking">Select...</option>
-                        <option value="never" id="optNever">Never smoked</option>
-                        <option value="former" id="optFormer">Former smoker</option>
-                        <option value="current" id="optCurrent">Current smoker</option>
-                    </select>
-                </div>
-                <div class="onboarding-actions">
-                    <button class="btn-secondary" onclick="prevStep()">Back</button>
-                    <button class="btn-primary" onclick="nextStep()" style="width:auto;">Next</button>
-                </div>
-            </div>
-            
+<div class="onboarding-step" id="step2" style="padding: 1.5rem;"> 
+    <h2 id="onbStep2Title">Diet & Lifestyle</h2>
+    <p id="onbStep2Desc">This helps us consider food-drug interactions.</p>
+    <div class="form-group">
+        <label id="onbDietLabel">Dietary Pattern</label>
+        <select id="profileDiet">
+            <option value="" id="optSelectDiet">Select...</option>
+            <option value="regular" id="optRegular">Regular/No restrictions</option>
+            <option value="vegetarian" id="optVegetarian">Vegetarian</option>
+            <option value="vegan" id="optVegan">Vegan</option>
+            <option value="halal" id="optHalal">Halal</option>
+            <option value="kosher" id="optKosher">Kosher</option>
+            <option value="glutenfree" id="optGlutenFree">Gluten-free</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label id="onbAllergiesLabel">Food Allergies</label>
+        <input type="text" id="profileAllergies" placeholder="e.g., peanuts, shellfish, dairy">
+    </div>
+    <div class="form-group">
+        <label id="onbAlcoholLabel">Alcohol Use</label>
+        <select id="profileAlcohol">
+            <option value="" id="optSelectAlcohol">Select...</option>
+            <option value="none" id="optNone">None</option>
+            <option value="occasional" id="optOccasional">Occasional</option>
+            <option value="moderate" id="optModerate">Moderate</option>
+            <option value="daily" id="optDaily">Daily</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label id="onbSmokingLabel">Smoking Status</label>
+        <select id="profileSmoking">
+            <option value="" id="optSelectSmoking">Select...</option>
+            <option value="never" id="optNever">Never smoked</option>
+            <option value="former" id="optFormer">Former smoker</option>
+            <option value="current" id="optCurrent">Current smoker</option>
+        </select>
+    </div>
+    <div class="form-group" style="padding: 0 0.1rem;">
+        <label id="onbInsuranceLabel">Health Insurance</label>
+        <select id="profileInsuranceSelect" onchange="handleInsuranceSelect(this.value)">
+            <option value="">Select...</option>
+            <option value="medicare">Medicare</option>
+            <option value="medicaid">Medicaid</option>
+            <option value="bluecross">Blue Cross Blue Shield</option>
+            <option value="aetna">Aetna</option>
+            <option value="united">UnitedHealth</option>
+            <option value="cigna">Cigna</option>
+            <option value="humana">Humana</option>
+            <option value="kaiser">Kaiser Permanente</option>
+            <option value="molina">Molina Healthcare</option>
+            <option value="centene">Centene</option>
+            <option value="other">Other (type below)</option>
+            <option value="none">No insurance / Self-pay</option>
+        </select>
+    </div>
+    <div class="form-group" id="insuranceOtherGroup" style="display:none;">
+        <label id="onbInsuranceOtherLabel">Insurance provider name</label>
+        <input type="text" id="profileInsuranceOther" placeholder="e.g., Oscar Health, Ambetter...">
+    </div>
+    <div class="onboarding-actions">
+        <button class="btn-secondary" onclick="prevStep()">Back</button>
+        <button class="btn-primary" onclick="nextStep()" style="width:auto;">Next</button>
+    </div>
+</div>
+
             <!-- Step 3 -->
             <div class="onboarding-step" id="step3">
                 <h2 id="onbStep3Title">Health Status</h2>
@@ -2766,6 +2832,7 @@ function checkSavedProfile() {
                     smoking: p.smoking || '',
                     mobility: p.mobility || '',
                     goals: p.goals || '',
+                    insurance: p.insurance || '',
                     conditions: p.conditions || [],
                     priorities: p.priorities || []
                 };
@@ -2783,6 +2850,18 @@ function checkSavedProfile() {
     if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
     if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
     if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
+
+    // Add this line with the other pre-fills
+    if (userProfile.insurance) {
+        var knownValues = ['medicare','medicaid','bluecross','aetna','united','cigna','humana','kaiser','molina','centene','none'];
+        if (knownValues.indexOf(userProfile.insurance) !== -1) {
+         document.getElementById('profileInsuranceSelect').value = userProfile.insurance;
+        } else {
+            document.getElementById('profileInsuranceSelect').value = 'other';
+            document.getElementById('insuranceOtherGroup').style.display = 'block';
+            document.getElementById('profileInsuranceOther').value = userProfile.insurance;
+        }
+    }
 
     // Pre-check conditions
     if (userProfile.conditions && userProfile.conditions.length > 0) {
@@ -2823,6 +2902,15 @@ function checkSavedProfile() {
         document.getElementById('profileBanner').style.display = 'none';
     }
 }
+function handleInsuranceSelect(value) {
+    var otherGroup = document.getElementById('insuranceOtherGroup');
+    if (value === 'other') {
+        otherGroup.style.display = 'block';
+    } else {
+        otherGroup.style.display = 'none';
+        document.getElementById('profileInsuranceOther').value = '';
+    }
+}
 
 function showOnboarding() {
     currentOnboardingStep = 0;
@@ -2840,7 +2928,18 @@ function showOnboarding() {
         if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
         if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
         if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
-
+        // Pre-fill insurance
+        if (userProfile.insurance) {
+            var insuranceSelect = document.getElementById('profileInsuranceSelect');
+            var knownValues = ['medicare','medicaid','bluecross','aetna','united','cigna','humana','kaiser','molina','centene','none'];
+        if (knownValues.indexOf(userProfile.insurance) !== -1) {
+            insuranceSelect.value = userProfile.insurance;
+        } else {
+            insuranceSelect.value = 'other';
+            document.getElementById('insuranceOtherGroup').style.display = 'block';
+            document.getElementById('profileInsuranceOther').value = userProfile.insurance;
+        }
+    }
         // Pre-check conditions checkboxes
         if (userProfile.conditions && userProfile.conditions.length > 0) {
             var condBoxes = document.querySelectorAll('#conditionsGroup input[type="checkbox"]');
@@ -2912,6 +3011,9 @@ function completeOnboarding() {
         smoking: document.getElementById('profileSmoking').value,
         mobility: document.getElementById('profileMobility').value,
         goals: document.getElementById('profileGoals').value,
+        insurance: document.getElementById('profileInsuranceSelect').value === 'other'
+        ? document.getElementById('profileInsuranceOther').value
+        : document.getElementById('profileInsuranceSelect').value,
         conditions: [],
         priorities: []
     };
@@ -3165,16 +3267,13 @@ function searchHospitals() {
     btn.textContent = t.searching;
     results.innerHTML = '<div class="no-results"><div style="display:flex;justify-content:center;gap:4px;padding:1rem;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>' + t.searching + '</div>';
     
-    // Check if input looks like coordinates (from "Use My Location")
     var coordsMatch = locationInput.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
     
     if (coordsMatch) {
-        // User is using coordinates directly (from Use My Location button)
         var lat = parseFloat(coordsMatch[1]);
         var lon = parseFloat(coordsMatch[2]);
         fetchHospitals(lat, lon, radius);
     } else {
-        // User typed a location - geocode it
         fetch('/geocode?location=' + encodeURIComponent(locationInput))
         .then(function(r) { 
             if (!r.ok) {
@@ -3198,6 +3297,25 @@ function searchHospitals() {
             btn.disabled = false;
             btn.textContent = t.searchBtn;
         });
+    }
+}
+
+function toggleInsuranceFilter() {
+    var btn = document.getElementById('insuranceToggle');
+    var cards = document.querySelectorAll('.hospital-card');
+    var isShowingAll = btn.textContent === 'Showing All';
+    
+    if (isShowingAll) {
+        btn.textContent = 'Show All';
+        for (var i = 0; i < cards.length; i++) {
+            var badge = cards[i].querySelector('.insurance-verify');
+            if (badge) cards[i].style.display = 'none';
+        }
+    } else {
+        btn.textContent = 'Showing All';
+        for (var i = 0; i < cards.length; i++) {
+            cards[i].style.display = 'block';
+        }
     }
 }
 
@@ -3230,13 +3348,57 @@ function fetchHospitals(lat, lon, radius) {
             return;
         }
         
+        var userInsurance = userProfile ? (userProfile.insurance || '') : '';
+        var majorInsurers = ['bluecross', 'aetna', 'united', 'cigna', 'humana', 'kaiser', 'molina', 'centene'];
+        var govInsurance = ['medicare', 'medicaid'];
+
+        function getInsuranceBadge(hospitalName, insurance) {
+            if (!insurance || insurance === '' || insurance === 'none') return '';
+            var name = hospitalName.toLowerCase();
+            var isPublic = name.indexOf('memorial') !== -1 || 
+                           name.indexOf('general') !== -1 || 
+                           name.indexOf('county') !== -1 || 
+                           name.indexOf('community') !== -1 ||
+                           name.indexOf('regional') !== -1 ||
+                           name.indexOf('medical center') !== -1 ||
+                           name.indexOf('university') !== -1 ||
+                           name.indexOf('veterans') !== -1 ||
+                           name.indexOf('va ') !== -1;
+
+            if (govInsurance.indexOf(insurance) !== -1) {
+                if (isPublic) {
+                    return '<span class="insurance-badge insurance-likely">Accepts ' + insurance.charAt(0).toUpperCase() + insurance.slice(1) + '</span>';
+                } else {
+                    return '<span class="insurance-badge insurance-verify">Call to Verify</span>';
+                }
+            }
+            if (majorInsurers.indexOf(insurance) !== -1) {
+                if (isPublic) {
+                    return '<span class="insurance-badge insurance-likely">Likely Accepts Your Insurance</span>';
+                } else {
+                    return '<span class="insurance-badge insurance-verify">Call to Verify</span>';
+                }
+            }
+            return '<span class="insurance-badge insurance-verify">Call to Verify Insurance</span>';
+        }
+
         var html = '';
+
+        if (userInsurance && userInsurance !== 'none') {
+            html += '<div class="insurance-filter">' +
+                '<span class="insurance-filter-label">Your insurance: <strong>' + userInsurance + '</strong></span>' +
+                '<button class="insurance-toggle" id="insuranceToggle" onclick="toggleInsuranceFilter()">Showing All</button>' +
+                '</div>';
+        }
+
         for (var i = 0; i < data.hospitals.length; i++) {
             var h = data.hospitals[i];
+            var badge = getInsuranceBadge(h.name, userInsurance);
             html += '<div class="hospital-card' + (h.emergency ? ' emergency' : '') + '">';
             html += '<div class="hospital-name">' + h.name;
             if (h.emergency) html += '<span class="emergency-badge">' + t.emergency + '</span>';
             html += '</div>';
+            if (badge) html += '<div style="margin-bottom:0.4rem;">' + badge + '</div>';
             if (h.address || h.city) {
                 html += '<div class="hospital-info">' + [h.address, h.city].filter(Boolean).join(', ') + '</div>';
             }

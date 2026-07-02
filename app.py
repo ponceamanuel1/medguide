@@ -514,11 +514,12 @@ def save_profile():
             "smoking": data.get("smoking", ""),
             "mobility": data.get("mobility", ""),
             "goals": data.get("goals", ""),
+            "insurance": data.get("insurance", ""),
             "conditions": data.get("conditions", []),
             "priorities": data.get("priorities", []),
             "language": data.get("language", "en"),
             "user_id": data.get("user_id"),
-    }).execute()
+        }).execute()
         profile_id = result.data[0]["id"] if result.data else None
         return jsonify({"success": True, "profile_id": profile_id})
 
