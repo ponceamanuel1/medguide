@@ -332,9 +332,14 @@
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
+            console.log('Full response:', JSON.stringify(data));
             setLoading('signin-btn', false, 'Sign In');
             if (data.success) {
-                window.location.href = '/app';
+                var redirectUrl = '/app?user_id=' + data.user_id + '&email=' + encodeURIComponent(data.email);
+                console.log('Redirecting to:', redirectUrl);
+                console.log('user_id:', data.user_id);
+                console.log('email:', data.email);
+                window.location.href = redirectUrl;
             } else {
                 showAlert('signin-error', data.error || 'Sign in failed. Please try again.', 'error');
             }

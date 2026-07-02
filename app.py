@@ -9,7 +9,7 @@ import os
 import tempfile
 import json
 import anthropic
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -21,6 +21,7 @@ MAX_CONTENT_LENGTH = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
 load_dotenv()
 
@@ -429,7 +430,10 @@ def login():
 
 @app.route("/app")
 def index():
-    return render_template("index.html")
+    return render_template("index.html",
+        session_user_id=session.get('user_id', ''),
+        session_email=session.get('email', '')
+    )
 
 @app.route('/auth/signup', methods=['POST'])
 def auth_signup():
@@ -475,6 +479,8 @@ def auth_signin():
         })
 
         if result.user:
+            session['user_id'] = result.user.id
+            session['email'] = result.user.email
             return jsonify({
                 'success': True,
                 'user_id': result.user.id,
@@ -511,8 +517,8 @@ def save_profile():
             "conditions": data.get("conditions", []),
             "priorities": data.get("priorities", []),
             "language": data.get("language", "en"),
-        }).execute()
-
+            "user_id": data.get("user_id"),
+    }).execute()
         profile_id = result.data[0]["id"] if result.data else None
         return jsonify({"success": True, "profile_id": profile_id})
 
@@ -520,6 +526,28 @@ def save_profile():
         print(f"Save profile error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/get-profile', methods=['GET'])
+def get_profile():
+    try:
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'No user_id provided'}), 400
+
+        result = supabase.table("profiles")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .execute()
+
+        if result.data:
+            return jsonify({'success': True, 'profile': result.data[0]})
+        else:
+            return jsonify({'success': False, 'profile': None})
+
+    except Exception as e:
+        print(f"Get profile error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/save-message', methods=['POST'])
 def save_message():

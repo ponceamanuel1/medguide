@@ -1162,6 +1162,7 @@ var selectedFile = null;
 var currentOnboardingStep = 0;
 var userProfile = null;
 var currentProfileId = null;
+var currentUserId = null
 
 // =====================================================
 // COMPLETE TRANSLATIONS - ALL 10 LANGUAGES
@@ -2744,16 +2745,118 @@ function changeLanguage(lang) {
 // PROFILE & ONBOARDING FUNCTIONS
 // =====================================================
 function checkSavedProfile() {
-    // Always show onboarding on page load for privacy - no data is saved between sessions
-    document.getElementById('onboardingOverlay').classList.remove('hidden');
-    document.getElementById('createProfileBanner').style.display = 'none';
-    document.getElementById('profileBanner').style.display = 'none';
+    var userStr = sessionStorage.getItem('medguide_user');
+    
+    if (userStr) {
+        var user = JSON.parse(userStr);
+        currentUserId = user.id;
+
+        fetch('/get-profile?user_id=' + user.id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success && data.profile) {
+                var p = data.profile;
+                userProfile = {
+                    age: p.age_range || '',
+                    gender: p.gender || '',
+                    ethnicity: p.ethnicity || '',
+                    diet: p.diet || '',
+                    allergies: p.allergies || '',
+                    alcohol: p.alcohol || '',
+                    smoking: p.smoking || '',
+                    mobility: p.mobility || '',
+                    goals: p.goals || '',
+                    conditions: p.conditions || [],
+                    priorities: p.priorities || []
+                };
+                currentProfileId = p.id;
+
+    if (userProfile.age) document.getElementById('ageRange').value = userProfile.age;
+
+    // Pre-fill onboarding fields so they're ready when user clicks Edit Profile
+    if (userProfile.age) document.getElementById('profileAge').value = userProfile.age;
+    if (userProfile.gender) document.getElementById('profileGender').value = userProfile.gender;
+    if (userProfile.ethnicity) document.getElementById('profileEthnicity').value = userProfile.ethnicity;
+    if (userProfile.diet) document.getElementById('profileDiet').value = userProfile.diet;
+    if (userProfile.allergies) document.getElementById('profileAllergies').value = userProfile.allergies;
+    if (userProfile.alcohol) document.getElementById('profileAlcohol').value = userProfile.alcohol;
+    if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
+    if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
+    if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
+
+    // Pre-check conditions
+    if (userProfile.conditions && userProfile.conditions.length > 0) {
+        var condBoxes = document.querySelectorAll('#conditionsGroup input[type="checkbox"]');
+        for (var i = 0; i < condBoxes.length; i++) {
+            condBoxes[i].checked = userProfile.conditions.indexOf(condBoxes[i].value) !== -1;
+        }
+    }
+
+    // Pre-check priorities
+    if (userProfile.priorities && userProfile.priorities.length > 0) {
+        var priBoxes = document.querySelectorAll('#prioritiesGroup input[type="checkbox"]');
+        for (var i = 0; i < priBoxes.length; i++) {
+            priBoxes[i].checked = userProfile.priorities.indexOf(priBoxes[i].value) !== -1;
+        }
+    }
+
+                document.getElementById('profileBanner').style.display = 'flex';
+                document.getElementById('profileBannerText').textContent = 'Welcome back, ' + user.email.split('@')[0] + '!';
+                document.getElementById('createProfileBanner').style.display = 'none';
+                document.getElementById('onboardingOverlay').classList.add('hidden');
+
+                updateContextStatus();
+            } else {
+                document.getElementById('onboardingOverlay').classList.remove('hidden');
+                document.getElementById('createProfileBanner').style.display = 'none';
+                document.getElementById('profileBanner').style.display = 'none';
+            }
+        })
+        .catch(function() {
+            document.getElementById('onboardingOverlay').classList.remove('hidden');
+            document.getElementById('createProfileBanner').style.display = 'none';
+            document.getElementById('profileBanner').style.display = 'none';
+        });
+    } else {
+        document.getElementById('onboardingOverlay').classList.remove('hidden');
+        document.getElementById('createProfileBanner').style.display = 'none';
+        document.getElementById('profileBanner').style.display = 'none';
+    }
 }
 
 function showOnboarding() {
     currentOnboardingStep = 0;
     updateOnboardingStep();
     document.getElementById('onboardingOverlay').classList.remove('hidden');
+
+    // Pre-fill form fields from saved profile
+    if (userProfile) {
+        if (userProfile.age) document.getElementById('profileAge').value = userProfile.age;
+        if (userProfile.gender) document.getElementById('profileGender').value = userProfile.gender;
+        if (userProfile.ethnicity) document.getElementById('profileEthnicity').value = userProfile.ethnicity;
+        if (userProfile.diet) document.getElementById('profileDiet').value = userProfile.diet;
+        if (userProfile.allergies) document.getElementById('profileAllergies').value = userProfile.allergies;
+        if (userProfile.alcohol) document.getElementById('profileAlcohol').value = userProfile.alcohol;
+        if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
+        if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
+        if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
+
+        // Pre-check conditions checkboxes
+        if (userProfile.conditions && userProfile.conditions.length > 0) {
+            var condBoxes = document.querySelectorAll('#conditionsGroup input[type="checkbox"]');
+            for (var i = 0; i < condBoxes.length; i++) {
+                condBoxes[i].checked = userProfile.conditions.indexOf(condBoxes[i].value) !== -1;
+            }
+        }
+
+        // Pre-check priorities checkboxes
+        if (userProfile.priorities && userProfile.priorities.length > 0) {
+            var priBoxes = document.querySelectorAll('#prioritiesGroup input[type="checkbox"]');
+            for (var i = 0; i < priBoxes.length; i++) {
+                priBoxes[i].checked = userProfile.priorities.indexOf(priBoxes[i].value) !== -1;
+            }
+        }
+    }
 }
 
 function closeOnboarding() {
@@ -2812,28 +2915,49 @@ function completeOnboarding() {
         conditions: [],
         priorities: []
     };
-    
+
     var conditionBoxes = document.querySelectorAll('#conditionsGroup input:checked');
     for (var i = 0; i < conditionBoxes.length; i++) {
         userProfile.conditions.push(conditionBoxes[i].value);
     }
-    
+
     var priorityBoxes = document.querySelectorAll('#prioritiesGroup input:checked');
     for (var i = 0; i < priorityBoxes.length; i++) {
         userProfile.priorities.push(priorityBoxes[i].value);
     }
-    
-    // Profile kept in memory only - not saved to localStorage for privacy
-    
+
     document.getElementById('onboardingOverlay').classList.add('hidden');
     document.getElementById('profileBanner').style.display = 'flex';
     document.getElementById('createProfileBanner').style.display = 'none';
-    
+
     if (userProfile.age) {
         document.getElementById('ageRange').value = userProfile.age;
     }
-    
+
     updateContextStatus();
+
+    var payload = Object.assign({}, userProfile, {
+        language: currentLang,
+        user_id: currentUserId
+    });
+
+    fetch('/save-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success && data.profile_id) {
+            currentProfileId = data.profile_id;
+            console.log('Profile saved to Supabase:', currentProfileId);
+        } else {
+            console.error('Profile save failed:', data.error);
+        }
+    })
+    .catch(function(e) {
+        console.error('Profile save network error:', e);
+    });
 }
 
 // =====================================================
@@ -3138,6 +3262,18 @@ function fetchHospitals(lat, lon, radius) {
 document.getElementById('medications').addEventListener('input', updateContextStatus);
 document.getElementById('conditions').addEventListener('input', updateContextStatus);
 document.getElementById('symptoms').addEventListener('input', updateContextStatus);
+
+// Get user from Flask session
+var sessionUserId = '{{ session_user_id }}';
+var sessionEmail = '{{ session_email }}';
+
+if (sessionUserId) {
+    currentUserId = sessionUserId;
+    sessionStorage.setItem('medguide_user', JSON.stringify({
+        id: sessionUserId,
+        email: sessionEmail
+    }));
+}
 
 // Hide splash and check profile
 setTimeout(function() {
