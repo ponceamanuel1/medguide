@@ -9,7 +9,7 @@ import os
 import tempfile
 import json
 import anthropic
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -424,8 +424,73 @@ TONE: Warm, supportive, conversational - like a knowledgeable friend who cares."
     return base + lang_map.get(language, '')
 
 @app.route("/")
+def login():
+    return render_template("login.html")
+
+@app.route("/app")
 def index():
     return render_template("index.html")
+
+@app.route('/auth/signup', methods=['POST'])
+def auth_signup():
+    try:
+        data = request.json or {}
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+
+        if not email or not password:
+            return jsonify({'success': False, 'error': 'Email and password are required'}), 400
+
+        result = supabase.auth.sign_up({
+            'email': email,
+            'password': password
+        })
+
+        if result.user:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Sign up failed. Please try again.'})
+
+    except Exception as e:
+        error_msg = str(e)
+        print(f"Signup error: {error_msg}")
+        if 'already registered' in error_msg.lower() or 'already been registered' in error_msg.lower():
+            return jsonify({'success': False, 'error': 'An account with this email already exists. Please sign in instead.'})
+        return jsonify({'success': False, 'error': 'Sign up failed. Please try again.'}), 500
+
+
+@app.route('/auth/signin', methods=['POST'])
+def auth_signin():
+    try:
+        data = request.json or {}
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+
+        if not email or not password:
+            return jsonify({'success': False, 'error': 'Email and password are required'}), 400
+
+        result = supabase.auth.sign_in_with_password({
+            'email': email,
+            'password': password
+        })
+
+        if result.user:
+            return jsonify({
+                'success': True,
+                'user_id': result.user.id,
+                'email': result.user.email
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Invalid email or password.'})
+
+    except Exception as e:
+        error_msg = str(e)
+        print(f"Signin error: {error_msg}")
+        if 'invalid' in error_msg.lower() or 'credentials' in error_msg.lower():
+            return jsonify({'success': False, 'error': 'Invalid email or password.'})
+        if 'email not confirmed' in error_msg.lower():
+            return jsonify({'success': False, 'error': 'Please verify your email first. Check your inbox for a verification link.'})
+        return jsonify({'success': False, 'error': 'Sign in failed. Please try again.'}), 500
 
 @app.route('/save-profile', methods=['POST'])
 def save_profile():

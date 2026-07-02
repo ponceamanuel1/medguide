@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedGuide — Sign In</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 60%, #60a5fa 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 1.25rem;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+            color: #fff;
+        }
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .card-header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .card-header p { font-size: 0.9rem; opacity: 0.85; }
+
+        .tabs { display: flex; border-bottom: 1px solid #e5e7eb; }
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            font-family: inherit;
+        }
+        .tab.active { color: #1e3a8a; border-bottom-color: #1e3a8a; }
+        .tab:hover:not(.active) { background: #f8fafc; }
+
+        .card-body { padding: 1.75rem 2rem; }
+
+        .form-panel { display: none; }
+        .form-panel.active { display: block; }
+
+        .form-group { margin-bottom: 1.1rem; }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.4rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            color: #1f2937;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .password-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 0.3rem; }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            border: none;
+            padding: 0.85rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 0.5rem;
+            transition: opacity 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.92; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        .btn-guest {
+            width: 100%;
+            background: none;
+            border: 1.5px solid #d1d5db;
+            color: #6b7280;
+            padding: 0.85rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 0.75rem;
+            transition: all 0.2s;
+        }
+        .btn-guest:hover { background: #f8fafc; border-color: #9ca3af; color: #374151; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.25rem 0 0.5rem;
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .alert.error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+        .alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .alert.show { display: block; }
+
+        .verify-info { text-align: center; padding: 0.5rem 0 1rem; }
+        .verify-info svg { width: 48px; height: 48px; stroke: #3b82f6; margin-bottom: 0.75rem; }
+        .verify-info h3 { color: #1e3a8a; font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .verify-info p { color: #6b7280; font-size: 0.875rem; line-height: 1.5; }
+        .verify-email-display {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            color: #1e40af;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 0.75rem 0;
+            text-align: center;
+        }
+
+        .card-footer {
+            padding: 1rem 2rem 1.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="card-header">
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+        </div>
+        <h1>MedGuide</h1>
+        <p>Your personalized health understanding assistant</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+        <button class="tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <div class="card-body">
+
+        <!-- SIGN IN -->
+        <div class="form-panel active" id="panel-signin">
+            <div class="alert error" id="signin-error"></div>
+            <div class="alert success" id="signin-success"></div>
+            <div class="form-group">
+                <label>Email address</label>
+                <input type="email" id="signin-email" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="signin-password" placeholder="Your password" autocomplete="current-password"
+                    onkeypress="if(event.key==='Enter') signIn()">
+            </div>
+            <button class="btn-primary" onclick="signIn()" id="signin-btn">Sign In</button>
+            <div class="divider">or</div>
+            <button class="btn-guest" onclick="continueAsGuest()">Continue without an account</button>
+        </div>
+
+        <!-- SIGN UP -->
+        <div class="form-panel" id="panel-signup">
+            <div class="alert error" id="signup-error"></div>
+
+            <div id="signup-form">
+                <div class="form-group">
+                    <label>Email address</label>
+                    <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signup-password" placeholder="At least 8 characters" autocomplete="new-password">
+                    <p class="password-hint">Minimum 8 characters</p>
+                </div>
+                <div class="form-group">
+                    <label>Confirm password</label>
+                    <input type="password" id="signup-confirm" placeholder="Repeat your password" autocomplete="new-password"
+                        onkeypress="if(event.key==='Enter') signUp()">
+                </div>
+                <button class="btn-primary" onclick="signUp()" id="signup-btn">Create Account</button>
+                <div class="divider">or</div>
+                <button class="btn-guest" onclick="continueAsGuest()">Continue without an account</button>
+            </div>
+
+            <!-- Shown after successful signup -->
+            <div id="verify-panel" style="display:none">
+                <div class="verify-info">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <h3>Check your email</h3>
+                    <p>We sent a verification link to:</p>
+                    <div class="verify-email-display" id="verify-email-display"></div>
+                    <p>Click the link in the email to verify your account, then sign in below.</p>
+                </div>
+                <button class="btn-primary" onclick="switchTab('signin')">Go to Sign In</button>
+                <button class="btn-guest" onclick="continueAsGuest()">Continue without an account</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card-footer">
+        MedGuide is an educational tool. It does not replace professional medical advice.
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        document.getElementById('panel-signin').classList.remove('active');
+        document.getElementById('panel-signup').classList.remove('active');
+        document.getElementById('tab-signin').classList.remove('active');
+        document.getElementById('tab-signup').classList.remove('active');
+
+        if (tab === 'signin') {
+            document.getElementById('panel-signin').classList.add('active');
+            document.getElementById('tab-signin').classList.add('active');
+        } else {
+            document.getElementById('panel-signup').classList.add('active');
+            document.getElementById('tab-signup').classList.add('active');
+        }
+    }
+
+    function showAlert(id, message, type) {
+        var el = document.getElementById(id);
+        el.textContent = message;
+        el.className = 'alert ' + type + ' show';
+    }
+
+    function hideAlert(id) {
+        var el = document.getElementById(id);
+        el.className = 'alert';
+    }
+
+    function setLoading(btnId, loading, defaultText) {
+        var btn = document.getElementById(btnId);
+        btn.disabled = loading;
+        btn.innerHTML = loading ? '<span class="spinner"></span>' + defaultText : defaultText;
+    }
+
+    function signIn() {
+        var email = document.getElementById('signin-email').value.trim();
+        var password = document.getElementById('signin-password').value;
+
+        hideAlert('signin-error');
+        hideAlert('signin-success');
+
+        if (!email || !password) {
+            showAlert('signin-error', 'Please enter your email and password.', 'error');
+            return;
+        }
+
+        setLoading('signin-btn', true, 'Sign In');
+
+        fetch('/auth/signin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password: password })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            setLoading('signin-btn', false, 'Sign In');
+            if (data.success) {
+                window.location.href = '/app';
+            } else {
+                showAlert('signin-error', data.error || 'Sign in failed. Please try again.', 'error');
+            }
+        })
+        .catch(function() {
+            setLoading('signin-btn', false, 'Sign In');
+            showAlert('signin-error', 'Connection error. Please try again.', 'error');
+        });
+    }
+
+    function signUp() {
+        var email = document.getElementById('signup-email').value.trim();
+        var password = document.getElementById('signup-password').value;
+        var confirm = document.getElementById('signup-confirm').value;
+
+        hideAlert('signup-error');
+
+        if (!email || !password || !confirm) {
+            showAlert('signup-error', 'Please fill in all fields.', 'error');
+            return;
+        }
+        if (password.length < 8) {
+            showAlert('signup-error', 'Password must be at least 8 characters.', 'error');
+            return;
+        }
+        if (password !== confirm) {
+            showAlert('signup-error', 'Passwords do not match.', 'error');
+            return;
+        }
+
+        setLoading('signup-btn', true, 'Create Account');
+
+        fetch('/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password: password })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            setLoading('signup-btn', false, 'Create Account');
+            if (data.success) {
+                document.getElementById('verify-email-display').textContent = email;
+                document.getElementById('signup-form').style.display = 'none';
+                document.getElementById('verify-panel').style.display = 'block';
+            } else {
+                showAlert('signup-error', data.error || 'Sign up failed. Please try again.', 'error');
+            }
+        })
+        .catch(function() {
+            setLoading('signup-btn', false, 'Create Account');
+            showAlert('signup-error', 'Connection error. Please try again.', 'error');
+        });
+    }
+
+    function continueAsGuest() {
+        window.location.href = '/app';
+    }
+</script>
+</body>
+</html>
