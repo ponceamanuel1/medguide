@@ -789,6 +789,31 @@
             font-family: inherit;
         }
         .insurance-toggle:hover { background: #1e40af; }
+
+        /* Hospital Action Buttons */
+        .action-call {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #86efac !important;
+            font-weight: 600;
+        }
+        .action-call:hover { background: #dcfce7 !important; }
+
+        .action-book {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff !important;
+            border: none !important;
+            font-weight: 600;
+        }
+        .action-book:hover { opacity: 0.9; background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important; }
+
+        .action-directions {
+            background: #f8fafc;
+            color: #374151;
+            border: 1px solid #d1d5db !important;
+        }
+        .action-directions:hover { background: #f1f5f9 !important; }
+
     </style>
 </head>
 <body>
@@ -3303,16 +3328,16 @@ function searchHospitals() {
 function toggleInsuranceFilter() {
     var btn = document.getElementById('insuranceToggle');
     var cards = document.querySelectorAll('.hospital-card');
-    var isShowingAll = btn.textContent === 'Showing All';
+    var isShowingAll = btn.textContent === 'My Insurance Only';
     
     if (isShowingAll) {
-        btn.textContent = 'Show All';
+        btn.textContent = 'All Hospitals';
         for (var i = 0; i < cards.length; i++) {
             var badge = cards[i].querySelector('.insurance-verify');
             if (badge) cards[i].style.display = 'none';
         }
     } else {
-        btn.textContent = 'Showing All';
+        btn.textContent = 'My Insurance Only';
         for (var i = 0; i < cards.length; i++) {
             cards[i].style.display = 'block';
         }
@@ -3404,8 +3429,9 @@ function fetchHospitals(lat, lon, radius) {
             }
             html += '<div class="hospital-distance">' + h.distance + ' ' + t.milesAway + '</div>';
             html += '<div class="hospital-actions">';
-            if (h.phone) html += '<a href="tel:' + h.phone + '">' + h.phone + '</a>';
-            html += '<a href="https://www.google.com/maps/dir/?api=1&destination=' + h.lat + ',' + h.lon + '" target="_blank">' + t.directions + '</a>';
+            if (h.phone) html += '<a href="tel:' + h.phone + '" class="action-call">📞 Call to Book</a>';
+            html += '<a href="https://www.google.com/maps/dir/?api=1&destination=' + h.lat + ',' + h.lon + '" target="_blank" class="action-directions">' + t.directions + '</a>';
+            html += '<a href="https://www.google.com/search?q=' + encodeURIComponent(h.name + ' appointment booking') + '" target="_blank" class="action-book">Book Online</a>';
             html += '</div></div>';
         }
         results.innerHTML = html;

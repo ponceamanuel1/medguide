@@ -500,11 +500,11 @@ def auth_signin():
 
 @app.route('/save-profile', methods=['POST'])
 def save_profile():
-    """Saves a completed onboarding profile to Supabase and returns its ID."""
     try:
         data = request.json or {}
+        user_id = data.get("user_id")
 
-        result = supabase.table("profiles").insert({
+        profile_data = {
             "age_range": data.get("age", ""),
             "gender": data.get("gender", ""),
             "ethnicity": data.get("ethnicity", ""),
@@ -518,15 +518,35 @@ def save_profile():
             "conditions": data.get("conditions", []),
             "priorities": data.get("priorities", []),
             "language": data.get("language", "en"),
-            "user_id": data.get("user_id"),
-        }).execute()
+            "user_id": user_id,
+        }
+
+        # If user is logged in, check if profile already exists and update it
+        if user_id:
+            existing = supabase.table("profiles")\
+                .select("id")\
+                .eq("user_id", user_id)\
+                .limit(1)\
+                .execute()
+
+            if existing.data:
+                # Update existing profile
+                profile_id = existing.data[0]["id"]
+                supabase.table("profiles")\
+                    .update(profile_data)\
+                    .eq("id", profile_id)\
+                    .execute()
+                return jsonify({"success": True, "profile_id": profile_id})
+
+        # No existing profile - insert new one
+        result = supabase.table("profiles").insert(profile_data).execute()
         profile_id = result.data[0]["id"] if result.data else None
         return jsonify({"success": True, "profile_id": profile_id})
 
     except Exception as e:
         print(f"Save profile error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-
+    
 @app.route('/get-profile', methods=['GET'])
 def get_profile():
     try:
