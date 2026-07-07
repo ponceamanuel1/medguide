@@ -191,6 +191,23 @@
             vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+    /* Wellbeing Score Buttons */
+.score-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    padding: 0;
+}
+.score-btn:hover { border-color: #3b82f6; color: #1e3a8a; }
+.score-btn.selected { background: #1e3a8a !important; color: #fff !important; border-color: #1e3a8a !important; }
     </style>
 </head>
 <body>

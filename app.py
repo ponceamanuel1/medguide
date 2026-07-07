@@ -50,7 +50,25 @@ def ollama_chat(system_prompt, user_prompt):
                 {"role": "user", "content": user_prompt}
             ]
         )
-        return message.content[0].text
+        text = message.content[0].text
+        # Strip markdown formatting
+        import re
+        text = re.sub(r'#{1,6}\s*', '', text)
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+        text = re.sub(r'\*(.*?)\*', r'\1', text)
+        text = re.sub(r'_{1,2}(.*?)_{1,2}', r'\1', text)
+        text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^>\s*', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^[-•]\s', '', text, flags=re.MULTILINE)
+        # Remove emojis
+        emoji_pattern = re.compile("["
+            u"\U0001F600-\U0001F64F"
+            u"\U0001F300-\U0001F5FF"
+            u"\U0001F680-\U0001F9FF"
+            u"\U00002702-\U000027B0"
+            "]+", flags=re.UNICODE)
+        text = emoji_pattern.sub('', text)
+        return text.strip()
     except Exception as e:
         print(f"Anthropic error: {e}")
         return None
@@ -387,40 +405,43 @@ def check_crisis(text, language='en'):
 def get_system_prompt(language='en'):
     base = """You are MedGuide, a warm, caring health education assistant.
 
-CRITICAL RULES:
+CRITICAL FORMATTING RULES - STRICTLY FOLLOW THESE OR THE RESPONSE WILL BE REJECTED:
+- NEVER use # or ## or ### for headers
+- NEVER use ** or * or _ for bold or italic
+- NEVER use --- for dividers
+- NEVER use > for blockquotes
+- NEVER use emojis of any kind
+- NEVER start bullet points with - or *
+- Write ONLY plain text paragraphs separated by blank lines
+
+RESPONSE STRUCTURE - use these exact plain text labels:
+Write "Context:" then your explanation paragraph.
+Write "Check-In:" then 1-2 caring questions as plain sentences.
+Write "Questions for Your Doctor:" then number them 1. 2. 3. as plain text.
+Write "Important:" for any warnings as a plain paragraph.
+
+RULES:
 - You do NOT diagnose or prescribe - only educate
-- ONLY use information from peer-reviewed sources: PubMed, NIH, CDC, FDA, Mayo Clinic, Cleveland Clinic, WHO, Cochrane Library
-- If you're unsure or information isn't well-established, say so clearly
+- ONLY use information from peer-reviewed sources: PubMed, NIH, CDC, FDA, Mayo Clinic
 - Never invent statistics or studies
-
-RESPONSE FORMAT (follow this structure):
-
-1. **CONTEXT** (1-2 paragraphs): Briefly explain what's happening in simple terms. Help them understand the basics of their situation, medication, or condition. Be warm and reassuring.
-
-2. **CHECK-IN**: Ask 1-2 caring questions about what concerns them most. Examples:
-   - "What aspect of this worries you the most?"
-   - "Are you experiencing any specific symptoms that concern you?"
-   - "Is there something particular about this that's been on your mind?"
-
-3. **QUESTIONS FOR YOUR DOCTOR** (always include exactly 3):
-   - Question 1: About their specific situation
-   - Question 2: About treatment options or management
-   - Question 3: About lifestyle, prevention, or next steps
+- Always include exactly 3 numbered doctor questions
+- Be warm, supportive, and conversational
+- If someone mentions crisis or self-harm, provide crisis resources immediately
 
 End with: "Always consult your healthcare provider for personalized advice."
 
 TONE: Warm, supportive, conversational - like a knowledgeable friend who cares."""
 
     lang_map = {
-        'es': '\n\nRespond entirely in Spanish.',
-        'zh': '\n\nRespond entirely in Simplified Chinese.',
-        'fr': '\n\nRespond entirely in French.',
-        'de': '\n\nRespond entirely in German.',
-        'pt': '\n\nRespond entirely in Portuguese.',
-        'ja': '\n\nRespond entirely in Japanese.',
-        'ko': '\n\nRespond entirely in Korean.',
-        'ar': '\n\nRespond entirely in Arabic.',
-        'hi': '\n\nRespond entirely in Hindi.',
+        'es': '\n\nRespond entirely in Spanish. Use these Spanish section labels exactly: "Contexto:" instead of "Context:", "Consulta:" instead of "Check-In:", "Preguntas para tu Médico:" instead of "Questions for Your Doctor:", "Importante:" instead of "Important:", and "Siempre consulta a tu proveedor de salud para consejos personalizados." instead of "Always consult your healthcare provider for personalized advice."',
+        'zh': '\n\nRespond entirely in Simplified Chinese. Use these Chinese section labels: "背景：" instead of "Context:", "问询：" instead of "Check-In:", "向您的医生提问：" instead of "Questions for Your Doctor:", "重要：" instead of "Important:", "请始终咨询您的医疗保健提供者以获取个性化建议。" instead of the final disclaimer.',
+        'fr': '\n\nRespond entirely in French. Use these French section labels: "Contexte :" instead of "Context:", "Vérification :" instead of "Check-In:", "Questions pour votre Médecin :" instead of "Questions for Your Doctor:", "Important :" instead of "Important:", "Consultez toujours un professionnel de santé pour des conseils personnalisés." instead of the final disclaimer.',
+        'de': '\n\nRespond entirely in German. Use these German section labels: "Kontext:" instead of "Context:", "Nachfrage:" instead of "Check-In:", "Fragen für Ihren Arzt:" instead of "Questions for Your Doctor:", "Wichtig:" instead of "Important:", "Konsultieren Sie immer einen Arzt für persönliche Beratung." instead of the final disclaimer.',
+        'pt': '\n\nRespond entirely in Portuguese. Use these Portuguese section labels: "Contexto:" instead of "Context:", "Verificação:" instead of "Check-In:", "Perguntas para o seu Médico:" instead of "Questions for Your Doctor:", "Importante:" instead of "Important:", "Consulte sempre um profissional de saúde para aconselhamento personalizado." instead of the final disclaimer.',
+        'ja': '\n\nRespond entirely in Japanese. Use these Japanese section labels: "背景：" instead of "Context:", "確認：" instead of "Check-In:", "医師への質問：" instead of "Questions for Your Doctor:", "重要：" instead of "Important:", "個別のアドバイスについては、必ず医療専門家に相談してください。" instead of the final disclaimer.',
+        'ko': '\n\nRespond entirely in Korean. Use these Korean section labels: "배경：" instead of "Context:", "확인：" instead of "Check-In:", "의사에게 물어볼 질문：" instead of "Questions for Your Doctor:", "중요：" instead of "Important:", "개인화된 조언을 위해 항상 의료 전문가와 상담하세요." instead of the final disclaimer.',
+        'ar': '\n\nRespond entirely in Arabic. Use these Arabic section labels: "السياق:" instead of "Context:", "تحقق:" instead of "Check-In:", "أسئلة لطبيبك:" instead of "Questions for Your Doctor:", "مهم:" instead of "Important:", "استشر دائماً مقدم الرعاية الصحية للحصول على نصيحة شخصية." instead of the final disclaimer.',
+        'hi': '\n\nRespond entirely in Hindi. Use these Hindi section labels: "संदर्भ:" instead of "Context:", "जाँच:" instead of "Check-In:", "अपने डॉक्टर के लिए प्रश्न:" instead of "Questions for Your Doctor:", "महत्वपूर्ण:" instead of "Important:", "व्यक्तिगत सलाह के लिए हमेशा स्वास्थ्य सेवा प्रदाता से परामर्श करें।" instead of the final disclaimer.',
     }
     return base + lang_map.get(language, '')
 
@@ -570,6 +591,323 @@ def get_profile():
         print(f"Get profile error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/get-chat-history', methods=['GET'])
+def get_chat_history():
+    try:
+        profile_id = request.args.get('profile_id')
+        if not profile_id:
+            return jsonify({'success': False, 'messages': []})
+
+        result = supabase.table("chat_messages")\
+            .select("*")\
+            .eq("profile_id", profile_id)\
+            .order("created_at", desc=False)\
+            .limit(20)\
+            .execute()
+
+        return jsonify({'success': True, 'messages': result.data or []})
+
+    except Exception as e:
+        print(f"Get chat history error: {e}")
+        return jsonify({'success': False, 'messages': []}), 500
+    
+@app.route('/generate-report', methods=['POST'])
+def generate_report():
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable, Table, TableStyle
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from flask import send_file
+        import io
+        from datetime import datetime
+
+        data = request.json or {}
+        messages = data.get('messages', [])
+        profile = data.get('profile', {})
+        wellbeing = data.get('wellbeing', {})
+        language = data.get('language', 'en')
+        print(f"Generating report in language: {language}")
+
+        # Language labels
+        pdf_labels = {
+            'en': {'summary': 'Patient Health Summary', 'profile': 'Patient Profile', 'feeling': 'How the Patient is Feeling', 'physical': 'Physical Comfort', 'emotional': 'Emotional State', 'notes': 'Patient Notes', 'conversation': 'Conversation Summary', 'asked': 'Patient asked:', 'explained': 'MedGuide explained:', 'footer': 'Generated by MedGuide', 'disclaimer': 'This document is for educational purposes only. Always consult a qualified healthcare professional.', 'warning': 'This summary is for educational purposes only and does not constitute medical advice. Please share with your healthcare provider.'},
+            'es': {'summary': 'Resumen de Salud del Paciente', 'profile': 'Perfil del Paciente', 'feeling': 'Cómo se Siente el Paciente', 'physical': 'Comodidad Física', 'emotional': 'Estado Emocional', 'notes': 'Notas del Paciente', 'conversation': 'Resumen de la Conversación', 'asked': 'El paciente preguntó:', 'explained': 'MedGuide explicó:', 'footer': 'Generado por MedGuide', 'disclaimer': 'Este documento es solo para fines educativos. Siempre consulte a un profesional de salud calificado.', 'warning': 'Este resumen es solo para fines educativos y no constituye consejo médico.'},
+            'zh': {'summary': '患者健康摘要', 'profile': '患者档案', 'feeling': '患者的感受', 'physical': '身体舒适度', 'emotional': '情绪状态', 'notes': '患者备注', 'conversation': '对话摘要', 'asked': '患者问道：', 'explained': 'MedGuide解释：', 'footer': '由MedGuide生成', 'disclaimer': '本文件仅供教育目的。请咨询合格的医疗专业人员。', 'warning': '本摘要仅供教育目的，不构成医疗建议。'},
+            'fr': {'summary': 'Résumé de Santé du Patient', 'profile': 'Profil du Patient', 'feeling': 'Comment le Patient se Sent', 'physical': 'Confort Physique', 'emotional': 'État Émotionnel', 'notes': 'Notes du Patient', 'conversation': 'Résumé de la Conversation', 'asked': 'Le patient a demandé :', 'explained': 'MedGuide a expliqué :', 'footer': 'Généré par MedGuide', 'disclaimer': 'Ce document est à des fins éducatives uniquement. Consultez toujours un professionnel de santé qualifié.', 'warning': 'Ce résumé est à des fins éducatives uniquement et ne constitue pas un avis médical.'},
+            'de': {'summary': 'Gesundheitszusammenfassung des Patienten', 'profile': 'Patientenprofil', 'feeling': 'Wie sich der Patient fühlt', 'physical': 'Körperliches Wohlbefinden', 'emotional': 'Emotionaler Zustand', 'notes': 'Patientennotizen', 'conversation': 'Gesprächszusammenfassung', 'asked': 'Der Patient fragte:', 'explained': 'MedGuide erklärte:', 'footer': 'Erstellt von MedGuide', 'disclaimer': 'Dieses Dokument dient nur zu Bildungszwecken. Konsultieren Sie immer einen qualifizierten Arzt.', 'warning': 'Diese Zusammenfassung dient nur zu Bildungszwecken und stellt keine medizinische Beratung dar.'},
+            'pt': {'summary': 'Resumo de Saúde do Paciente', 'profile': 'Perfil do Paciente', 'feeling': 'Como o Paciente está se Sentindo', 'physical': 'Conforto Físico', 'emotional': 'Estado Emocional', 'notes': 'Notas do Paciente', 'conversation': 'Resumo da Conversa', 'asked': 'O paciente perguntou:', 'explained': 'MedGuide explicou:', 'footer': 'Gerado por MedGuide', 'disclaimer': 'Este documento é apenas para fins educacionais. Sempre consulte um profissional de saúde qualificado.', 'warning': 'Este resumo é apenas para fins educacionais e não constitui conselho médico.'},
+            'ja': {'summary': '患者の健康サマリー', 'profile': '患者プロフィール', 'feeling': '患者の状態', 'physical': '身体的な快適さ', 'emotional': '精神的な状態', 'notes': '患者メモ', 'conversation': '会話の要約', 'asked': '患者の質問：', 'explained': 'MedGuideの説明：', 'footer': 'MedGuideによって生成', 'disclaimer': 'この文書は教育目的のみです。常に資格のある医療専門家に相談してください。', 'warning': 'このサマリーは教育目的のみであり、医療アドバイスを構成するものではありません。'},
+            'ko': {'summary': '환자 건강 요약', 'profile': '환자 프로필', 'feeling': '환자의 상태', 'physical': '신체적 편안함', 'emotional': '감정 상태', 'notes': '환자 메모', 'conversation': '대화 요약', 'asked': '환자가 물었습니다:', 'explained': 'MedGuide가 설명했습니다:', 'footer': 'MedGuide에서 생성', 'disclaimer': '이 문서는 교육 목적으로만 사용됩니다. 항상 자격을 갖춘 의료 전문가와 상담하세요.', 'warning': '이 요약은 교육 목적으로만 사용되며 의료 조언을 구성하지 않습니다.'},
+            'ar': {'summary': 'ملخص صحة المريض', 'profile': 'ملف المريض', 'feeling': 'كيف يشعر المريض', 'physical': 'الراحة الجسدية', 'emotional': 'الحالة العاطفية', 'notes': 'ملاحظات المريض', 'conversation': 'ملخص المحادثة', 'asked': 'سأل المريض:', 'explained': 'شرح MedGuide:', 'footer': 'تم إنشاؤه بواسطة MedGuide', 'disclaimer': 'هذه الوثيقة لأغراض تعليمية فقط. استشر دائماً متخصصاً في الرعاية الصحية.', 'warning': 'هذا الملخص لأغراض تعليمية فقط ولا يشكل نصيحة طبية.'},
+            'hi': {'summary': 'रोगी स्वास्थ्य सारांश', 'profile': 'रोगी प्रोफ़ाइल', 'feeling': 'रोगी कैसा महसूस कर रहा है', 'physical': 'शारीरिक आराम', 'emotional': 'भावनात्मक स्थिति', 'notes': 'रोगी नोट्स', 'conversation': 'बातचीत सारांश', 'asked': 'रोगी ने पूछा:', 'explained': 'MedGuide ने समझाया:', 'footer': 'MedGuide द्वारा उत्पन्न', 'disclaimer': 'यह दस्तावेज़ केवल शैक्षिक उद्देश्यों के लिए है। हमेशा एक योग्य स्वास्थ्य पेशेवर से परामर्श करें।', 'warning': 'यह सारांश केवल शैक्षिक उद्देश्यों के लिए है और चिकित्सा सलाह नहीं है।'},
+        }
+        lbl = pdf_labels.get(language, pdf_labels['en'])
+        print(f"Profile gender value: '{profile.get('gender')}'")
+        print(f"Profile diet value: '{profile.get('diet')}'")
+        print(f"Profile smoking value: '{profile.get('smoking')}'")
+
+        # Build PDF in memory
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            rightMargin=0.75*inch,
+            leftMargin=0.75*inch,
+            topMargin=0.75*inch,
+            bottomMargin=0.75*inch
+        )
+
+        styles = getSampleStyleSheet()
+        story = []
+
+        # Custom styles
+        title_style = ParagraphStyle('Title',
+            parent=styles['Heading1'],
+            fontSize=22,
+            textColor=colors.HexColor('#1e3a8a'),
+            spaceAfter=4,
+            alignment=TA_CENTER
+        )
+        subtitle_style = ParagraphStyle('Subtitle',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.HexColor('#6b7280'),
+            spaceAfter=2,
+            alignment=TA_CENTER
+        )
+        section_style = ParagraphStyle('Section',
+            parent=styles['Heading2'],
+            fontSize=13,
+            textColor=colors.HexColor('#1e3a8a'),
+            spaceBefore=16,
+            spaceAfter=6
+        )
+        body_style = ParagraphStyle('Body',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.HexColor('#374151'),
+            spaceAfter=4,
+            leading=16
+        )
+        label_style = ParagraphStyle('Label',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=colors.HexColor('#6b7280'),
+            spaceAfter=2
+        )
+        disclaimer_style = ParagraphStyle('Disclaimer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.HexColor('#9ca3af'),
+            alignment=TA_CENTER,
+            spaceAfter=4
+        )
+
+        # Header
+        story.append(Paragraph('MedGuide', title_style))
+        story.append(Paragraph(lbl['summary'], subtitle_style))
+        story.append(Paragraph(datetime.now().strftime('%B %d, %Y at %I:%M %p'), subtitle_style))
+        story.append(Spacer(1, 12))
+        story.append(HRFlowable(width='100%', thickness=2, color=colors.HexColor('#1e3a8a')))
+        story.append(Spacer(1, 12))
+
+        # Disclaimer
+        story.append(Paragraph(lbl['warning'], disclaimer_style))
+        story.append(Spacer(1, 8))
+
+        # Patient Profile
+        if profile:
+            story.append(Paragraph(lbl['profile'], section_style))
+            story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e5e7eb')))
+            story.append(Spacer(1, 6))
+        
+            #Translate profile values
+            value_map = {
+                'es': {
+                    'male': 'Masculino', 'female': 'Femenino', 'other': 'Otro',
+                    'regular': 'Regular', 'vegetarian': 'Vegetariano', 'vegan': 'Vegano',
+                    'halal': 'Halal', 'kosher': 'Kosher', 'glutenfree': 'Sin gluten',
+                    'none': 'Ninguno', 'occasional': 'Ocasional', 'moderate': 'Moderado', 'daily': 'Diario',
+                    'never': 'Nunca fumé', 'former': 'Ex fumador', 'current': 'Fumador actual',
+                    'full': 'Totalmente móvil', 'limited': 'Algunas limitaciones', 'assistive': 'Usa dispositivos',
+                },
+                'zh': {
+                    'male': '男', 'female': '女', 'other': '其他',
+                    'regular': '普通', 'vegetarian': '素食', 'vegan': '纯素食',
+                    'halal': '清真', 'kosher': '犹太洁食', 'glutenfree': '无麸质',
+                    'none': '无', 'occasional': '偶尔', 'moderate': '适度', 'daily': '每天',
+                    'never': '从不吸烟', 'former': '曾经吸烟', 'current': '目前吸烟',
+                    'full': '完全行动自如', 'limited': '有些限制', 'assistive': '使用辅助设备',
+                },
+                'fr': {
+                    'male': 'Masculin', 'female': 'Féminin', 'other': 'Autre',
+                    'regular': 'Normal', 'vegetarian': 'Végétarien', 'vegan': 'Végétalien',
+                    'halal': 'Halal', 'kosher': 'Casher', 'glutenfree': 'Sans gluten',
+                    'none': 'Aucun', 'occasional': 'Occasionnel', 'moderate': 'Modéré', 'daily': 'Quotidien',
+                    'never': 'Jamais fumé', 'former': 'Ancien fumeur', 'current': 'Fumeur actuel',
+                    'full': 'Pleinement mobile', 'limited': 'Quelques limitations', 'assistive': 'Utilise des aides',
+                },
+                'de': {
+                    'male': 'Männlich', 'female': 'Weiblich', 'other': 'Andere',
+                    'regular': 'Normal', 'vegetarian': 'Vegetarisch', 'vegan': 'Vegan',
+                    'halal': 'Halal', 'kosher': 'Koscher', 'glutenfree': 'Glutenfrei',
+                    'none': 'Keiner', 'occasional': 'Gelegentlich', 'moderate': 'Mäßig', 'daily': 'Täglich',
+                    'never': 'Nie geraucht', 'former': 'Ehemaliger Raucher', 'current': 'Aktueller Raucher',
+                    'full': 'Voll mobil', 'limited': 'Einige Einschränkungen', 'assistive': 'Nutzt Hilfsmittel',
+                },
+                'pt': {
+                    'male': 'Masculino', 'female': 'Feminino', 'other': 'Outro',
+                    'regular': 'Regular', 'vegetarian': 'Vegetariano', 'vegan': 'Vegano',
+                    'halal': 'Halal', 'kosher': 'Kosher', 'glutenfree': 'Sem glúten',
+                    'none': 'Nenhum', 'occasional': 'Ocasional', 'moderate': 'Moderado', 'daily': 'Diário',
+                    'never': 'Nunca fumou', 'former': 'Ex-fumante', 'current': 'Fumante atual',
+                    'full': 'Totalmente móvel', 'limited': 'Algumas limitações', 'assistive': 'Usa dispositivos',
+                },
+                'ja': {
+                    'male': '男性', 'female': '女性', 'other': 'その他',
+                    'regular': '通常', 'vegetarian': 'ベジタリアン', 'vegan': 'ビーガン',
+                    'halal': 'ハラール', 'kosher': 'コーシャ', 'glutenfree': 'グルテンフリー',
+                    'none': 'なし', 'occasional': 'たまに', 'moderate': '適度', 'daily': '毎日',
+                    'never': '吸ったことがない', 'former': '以前は吸っていた', 'current': '現在吸っている',
+                    'full': '完全に動ける', 'limited': '一部制限あり', 'assistive': '補助器具を使用',
+                },
+                'ko': {
+                    'male': '남성', 'female': '여성', 'other': '기타',
+                    'regular': '일반', 'vegetarian': '채식주의자', 'vegan': '비건',
+                    'halal': '할랄', 'kosher': '코셔', 'glutenfree': '글루텐 프리',
+                    'none': '없음', 'occasional': '가끔', 'moderate': '적당히', 'daily': '매일',
+                    'never': '피운 적 없음', 'former': '전 흡연자', 'current': '현재 흡연자',
+                    'full': '완전 이동 가능', 'limited': '일부 제한', 'assistive': '보조 기구 사용',
+                },
+                'ar': {
+                    'male': 'ذكر', 'female': 'أنثى', 'other': 'آخر',
+                    'regular': 'عادي', 'vegetarian': 'نباتي', 'vegan': 'نباتي صرف',
+                    'halal': 'حلال', 'kosher': 'كوشر', 'glutenfree': 'خالٍ من الغلوتين',
+                    'none': 'لا شيء', 'occasional': 'أحياناً', 'moderate': 'معتدل', 'daily': 'يومياً',
+                    'never': 'لم أدخن أبداً', 'former': 'مدخن سابق', 'current': 'مدخن حالي',
+                    'full': 'متحرك بالكامل', 'limited': 'بعض القيود', 'assistive': 'أستخدم أدوات مساعدة',
+                },
+                'hi': {
+                    'male': 'पुरुष', 'female': 'महिला', 'other': 'अन्य',
+                    'regular': 'सामान्य', 'vegetarian': 'शाकाहारी', 'vegan': 'शुद्ध शाकाहारी',
+                    'halal': 'हलाल', 'kosher': 'कोशर', 'glutenfree': 'ग्लूटेन-मुक्त',
+                    'none': 'कोई नहीं', 'occasional': 'कभी-कभी', 'moderate': 'मध्यम', 'daily': 'रोज़ाना',
+                    'never': 'कभी नहीं पिया', 'former': 'पूर्व धूम्रपानी', 'current': 'वर्तमान धूम्रपानी',
+                    'full': 'पूर्ण गतिशील', 'limited': 'कुछ सीमाएं', 'assistive': 'सहायक उपकरण का उपयोग',
+                },
+            }
+
+            def translate_value(value, lang):
+                if not value:
+                    return ''
+                vm = value_map.get(lang, {})
+                return vm.get(value.lower(), value.capitalize())
+
+            profile_data = []
+            if profile.get('age'): profile_data.append(['Age Range', profile['age']])
+            if profile.get('gender'): profile_data.append(['Biological Sex', profile['gender'].capitalize()])
+            if profile.get('diet'): profile_data.append(['Diet', profile['diet'].capitalize()])
+            if profile.get('allergies'): profile_data.append(['Food Allergies', profile['allergies']])
+            if profile.get('smoking'): profile_data.append(['Smoking Status', profile['smoking'].capitalize()])
+            if profile.get('alcohol'): profile_data.append(['Alcohol Use', profile['alcohol'].capitalize()])
+            if profile.get('insurance'): profile_data.append(['Insurance', profile['insurance'].capitalize()])
+            if profile.get('conditions') and len(profile['conditions']) > 0:
+                profile_data.append(['Health Conditions', ', '.join(profile['conditions'])])
+            if profile.get('mobility'): profile_data.append(['Mobility', profile['mobility'].capitalize()])
+
+            if profile_data:
+                t = Table(profile_data, colWidths=[2*inch, 4.5*inch])
+                t.setStyle(TableStyle([
+                    ('FONTSIZE', (0,0), (-1,-1), 9),
+                    ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor('#6b7280')),
+                    ('TEXTCOLOR', (1,0), (1,-1), colors.HexColor('#374151')),
+                    ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
+                    ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.HexColor('#f8fafc'), colors.white]),
+                    ('PADDING', (0,0), (-1,-1), 6),
+                    ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+                ]))
+                story.append(t)
+
+        # Wellbeing Section
+        story.append(Paragraph(lbl['feeling'], section_style))
+        story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e5e7eb')))
+        story.append(Spacer(1, 6))
+
+        physical = wellbeing.get('physical')
+        emotional = wellbeing.get('emotional')
+        notes = wellbeing.get('notes', '')
+
+        def score_label(score, type):
+            if score is None:
+                return 'Not provided'
+            if type == 'physical':
+                labels = {1: 'Severe discomfort', 2: 'Significant discomfort', 3: 'Moderate discomfort', 4: 'Some discomfort', 5: 'Moderate', 6: 'Mostly comfortable', 7: 'Good', 8: 'Very good', 9: 'Excellent', 10: 'Feeling fine'}
+            else:
+                labels = {1: 'Very anxious/scared', 2: 'Very anxious', 3: 'Anxious', 4: 'Somewhat anxious', 5: 'Neutral', 6: 'Mostly calm', 7: 'Calm', 8: 'Good', 9: 'Very confident', 10: 'Calm and confident'}
+            return f'{score}/10 — {labels.get(score, "")}'
+
+        wellbeing_data = [
+            [lbl['physical'], score_label(physical, 'physical')],
+            [lbl['emotional'], score_label(emotional, 'emotional')],
+        ]
+        if notes:
+            wellbeing_data.append([lbl['notes'], notes])
+
+        wt = Table(wellbeing_data, colWidths=[2*inch, 4.5*inch])
+        wt.setStyle(TableStyle([
+            ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor('#6b7280')),
+            ('TEXTCOLOR', (1,0), (1,-1), colors.HexColor('#374151')),
+            ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
+            ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.HexColor('#fefce8'), colors.white]),
+            ('PADDING', (0,0), (-1,-1), 6),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#e5e7eb')),
+        ]))
+        story.append(wt)
+
+        # Conversation Summary
+        story.append(Paragraph(lbl['conversation'], section_style))
+        story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e5e7eb')))
+        story.append(Spacer(1, 6))
+
+        for msg in messages:
+            role = msg.get('role', '')
+            content = msg.get('content', '').strip()
+            if not content:
+                continue
+            if role == 'user':
+                story.append(Paragraph('<b>' + lbl['asked'] + '</b>', label_style))
+                story.append(Paragraph(content, body_style))
+            else:
+                story.append(Paragraph('<b>' + lbl['explained'] + '</b>', label_style))
+                content = content.replace('**', '')
+                story.append(Paragraph(content[:800] + ('...' if len(content) > 800 else ''), body_style))
+            story.append(Spacer(1, 4))
+
+        # Footer
+        story.append(Spacer(1, 16))
+        story.append(HRFlowable(width='100%', thickness=1, color=colors.HexColor('#e5e7eb')))
+        story.append(Spacer(1, 8))
+        story.append(Paragraph(lbl['footer'] + ' — medguide-production-434d.up.railway.app', disclaimer_style))
+        story.append(Paragraph(lbl['disclaimer'], disclaimer_style))
+
+        doc.build(story)
+        buffer.seek(0)
+
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name='MedGuide_Report.pdf'
+        )
+
+    except Exception as e:
+        print(f"Report generation error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/save-message', methods=['POST'])
 def save_message():
     """Logs a single chat message (user or assistant) to Supabase."""
@@ -589,7 +927,8 @@ def save_message():
     except Exception as e:
         print(f"Save message error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
-    
+
+
 @app.route('/chat', methods=['POST'])
 def chat():
     try:

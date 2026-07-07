@@ -1132,9 +1132,10 @@
 
                 <!-- Chat Panel -->
                 <div class="chat-panel">
-                    <div class="chat-header">
-                        <h3 id="chatTitle">Ask MedGuide</h3>
-                    </div>
+                <div class="chat-header" style="display:flex;align-items:center;justify-content:space-between;padding:1rem;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
+                    <h3 id="chatTitle">Ask MedGuide</h3>
+                    <button onclick="openWellbeingModal()" id="generateReportBtn" style="display:none;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;padding:0.4rem 0.85rem;border-radius:0.375rem;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;">📋 Generate Report</button>
+                </div>
                     <div class="chat-messages" id="chatMessages">
                         <div class="chat-welcome" id="chatWelcome">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1237,6 +1238,59 @@
                 <div id="hospitalResults" style="margin-top:1rem"></div>
             </div>
         </div>
+
+        <!-- Wellbeing Check-in Modal -->
+<div id="wellbeingOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:1rem;max-width:480px;width:90%;padding:2rem;box-shadow:0 25px 50px rgba(0,0,0,0.25);">
+        <h3 id="wellbeingTitle" style="color:#1e3a8a;margin-bottom:0.5rem;font-size:1.2rem;">Before we generate your report...</h3>
+        <p id="wellbeingSubtitle" style="color:#6b7280;font-size:0.9rem;margin-bottom:1.5rem;">Help your doctor understand how you're feeling right now.</p>
+
+        <!-- Physical Score -->
+<div style="margin-bottom:1.5rem;">
+    <label style="display:block;font-weight:600;color:#374151;margin-bottom:0.75rem;font-size:0.9rem;"><span id="wellbeingPhysicalLabel">Physical comfort</span> <span id="wellbeingPhysicalScale" style="color:#6b7280;font-weight:400">(1 = a lot of discomfort, 10 = feeling fine)</span></label>
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;" id="physicalScoreGroup">
+        <button onclick="selectScore('physical', 1)" class="score-btn" data-score="1">1</button>
+        <button onclick="selectScore('physical', 2)" class="score-btn" data-score="2">2</button>
+        <button onclick="selectScore('physical', 3)" class="score-btn" data-score="3">3</button>
+        <button onclick="selectScore('physical', 4)" class="score-btn" data-score="4">4</button>
+        <button onclick="selectScore('physical', 5)" class="score-btn" data-score="5">5</button>
+        <button onclick="selectScore('physical', 6)" class="score-btn" data-score="6">6</button>
+        <button onclick="selectScore('physical', 7)" class="score-btn" data-score="7">7</button>
+        <button onclick="selectScore('physical', 8)" class="score-btn" data-score="8">8</button>
+        <button onclick="selectScore('physical', 9)" class="score-btn" data-score="9">9</button>
+        <button onclick="selectScore('physical', 10)" class="score-btn" data-score="10">10</button>
+    </div>
+</div>
+
+<!-- Emotional Score -->
+<div style="margin-bottom:1.5rem;">
+    <label style="display:block;font-weight:600;color:#374151;margin-bottom:0.75rem;font-size:0.9rem;"><span id="wellbeingEmotionalLabel">Emotional state</span> <span id="wellbeingEmotionalScale" style="color:#6b7280;font-weight:400">(1 = very anxious/scared, 10 = calm and confident)</span></label>
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;" id="emotionalScoreGroup">
+        <button onclick="selectScore('emotional', 1)" class="score-btn" data-score="1">1</button>
+        <button onclick="selectScore('emotional', 2)" class="score-btn" data-score="2">2</button>
+        <button onclick="selectScore('emotional', 3)" class="score-btn" data-score="3">3</button>
+        <button onclick="selectScore('emotional', 4)" class="score-btn" data-score="4">4</button>
+        <button onclick="selectScore('emotional', 5)" class="score-btn" data-score="5">5</button>
+        <button onclick="selectScore('emotional', 6)" class="score-btn" data-score="6">6</button>
+        <button onclick="selectScore('emotional', 7)" class="score-btn" data-score="7">7</button>
+        <button onclick="selectScore('emotional', 8)" class="score-btn" data-score="8">8</button>
+        <button onclick="selectScore('emotional', 9)" class="score-btn" data-score="9">9</button>
+        <button onclick="selectScore('emotional', 10)" class="score-btn" data-score="10">10</button>
+    </div>
+</div>
+
+        <!-- Patient Notes -->
+        <div style="margin-bottom:1.5rem;">
+            <label style="display:block;font-weight:600;color:#374151;margin-bottom:0.5rem;font-size:0.9rem;"><span id="wellbeingNotesLabel">Anything else you want your doctor to know?</span> <span style="color:#6b7280;font-weight:400">(optional)</span></label>
+            <textarea id="patientNotes" rows="3" style="width:100%;padding:0.75rem;border:1.5px solid #d1d5db;border-radius:0.5rem;font-size:0.9rem;font-family:inherit;resize:none;" placeholder="e.g., I've been losing sleep over this, my pain gets worse at night..."></textarea>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;">
+            <button id="wellbeingCancelBtn" onclick="closeWellbeingModal()" style="flex:1;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:0.75rem;border-radius:0.5rem;font-size:0.9rem;cursor:pointer;font-family:inherit;">Cancel</button>
+            <button id="wellbeingGenerateBtn" onclick="generateReport()" style="flex:2;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;padding:0.75rem;border-radius:0.5rem;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Generate My Report</button>
+        </div>
+    </div>
+</div>
 
         <!-- Footer -->
         <footer class="footer">
@@ -1408,7 +1462,19 @@ var T = {
         priSleep: "Better sleep",
         priWeight: "Weight management",
         priMental: "Mental health",
-        priSideEffects: "Minimize side effects"
+        priSideEffects: "Minimize side effects",
+        generateReport: "📋 Generate Report",
+        wellbeingTitle: "Before we generate your report...",
+        wellbeingSubtitle: "Help your doctor understand how you're feeling right now.",
+        wellbeingPhysical: "Physical comfort",
+        wellbeingPhysicalScale: "(1 = a lot of discomfort, 10 = feeling fine)",
+        wellbeingEmotional: "Emotional state",
+        wellbeingEmotionalScale: "(1 = very anxious/scared, 10 = calm and confident)",
+        wellbeingNotes: "Anything else you want your doctor to know?",
+        wellbeingNotesOptional: "(optional)",
+        wellbeingCancel: "Cancel",
+        wellbeingGenerate: "Generate My Report",
+        wellbeingPlaceholder: "e.g., I've been losing sleep over this, my pain gets worse at night...",
     },
     es: {
         splashSubtitle: "Tu Asistente de Salud",
@@ -1567,7 +1633,19 @@ var T = {
         priSleep: "Mejor sueño",
         priWeight: "Control de peso",
         priMental: "Salud mental",
-        priSideEffects: "Minimizar efectos secundarios"
+        priSideEffects: "Minimizar efectos secundarios",
+        generateReport: "📋 Generar Informe",
+        wellbeingTitle: "Antes de generar tu informe...",
+        wellbeingSubtitle: "Ayuda a tu médico a entender cómo te sientes ahora.",
+        wellbeingPhysical: "Comodidad física",
+        wellbeingPhysicalScale: "(1 = mucho malestar, 10 = sintiéndome bien)",
+        wellbeingEmotional: "Estado emocional",
+        wellbeingEmotionalScale: "(1 = muy ansioso/asustado, 10 = tranquilo y seguro)",
+        wellbeingNotes: "¿Algo más que quieras que sepa tu médico?",
+        wellbeingNotesOptional: "(opcional)",
+        wellbeingCancel: "Cancelar",
+        wellbeingGenerate: "Generar Mi Informe",
+        wellbeingPlaceholder: "ej., He perdido el sueño por esto, mi dolor empeora de noche...",
     },
     zh: {
         splashSubtitle: "您的健康理解助手",
@@ -1719,7 +1797,19 @@ var T = {
         priSleep: "改善睡眠",
         priWeight: "体重管理",
         priMental: "心理健康",
-        priSideEffects: "减少副作用"
+        priSideEffects: "减少副作用",
+        generateReport: "📋 生成报告",
+        wellbeingTitle: "在生成报告之前...",
+        wellbeingSubtitle: "帮助您的医生了解您现在的感受。",
+        wellbeingPhysical: "身体舒适度",
+        wellbeingPhysicalScale: "(1 = 非常不舒适, 10 = 感觉良好)",
+        wellbeingEmotional: "情绪状态",
+        wellbeingEmotionalScale: "(1 = 非常焦虑/恐惧, 10 = 平静自信)",
+        wellbeingNotes: "还有什么想让医生知道的吗？",
+        wellbeingNotesOptional: "（可选）",
+        wellbeingCancel: "取消",
+        wellbeingGenerate: "生成我的报告",
+        wellbeingPlaceholder: "例如：我因此失眠，我的疼痛在晚上加重...",
     },
     fr: {
         splashSubtitle: "Votre Assistant Santé",
@@ -1852,7 +1942,20 @@ var T = {
         optCurrent: "Fumeur actuel",
         optFullMobile: "Pleinement mobile",
         optLimited: "Quelques limitations",
-        optAssistive: "Utilise des aides"
+        optAssistive: "Utilise des aides",
+        priSideEffects: "Minimiser les effets secondaires",
+        generateReport: "📋 Générer le Rapport",
+        wellbeingTitle: "Avant de générer votre rapport...",
+        wellbeingSubtitle: "Aidez votre médecin à comprendre comment vous vous sentez.",
+        wellbeingPhysical: "Confort physique",
+        wellbeingPhysicalScale: "(1 = beaucoup d'inconfort, 10 = je me sens bien)",
+        wellbeingEmotional: "État émotionnel",
+        wellbeingEmotionalScale: "(1 = très anxieux/effrayé, 10 = calme et confiant)",
+        wellbeingNotes: "Autre chose que vous voulez que votre médecin sache?",
+        wellbeingNotesOptional: "(optionnel)",
+        wellbeingCancel: "Annuler",
+        wellbeingGenerate: "Générer Mon Rapport",
+        wellbeingPlaceholder: "ex., J'ai du mal à dormir, ma douleur s'aggrave la nuit...",
     },
     de: {
         splashSubtitle: "Ihr Gesundheitsassistent",
@@ -1984,7 +2087,20 @@ var T = {
         optCurrent: "Aktueller Raucher",
         optFullMobile: "Voll mobil",
         optLimited: "Einige Einschränkungen",
-        optAssistive: "Nutze Hilfsmittel"
+        optAssistive: "Nutze Hilfsmittel",
+        priSideEffects: "Nebenwirkungen minimieren",
+        generateReport: "📋 Bericht Erstellen",
+        wellbeingTitle: "Bevor wir Ihren Bericht erstellen...",
+        wellbeingSubtitle: "Helfen Sie Ihrem Arzt zu verstehen, wie Sie sich gerade fühlen.",
+        wellbeingPhysical: "Körperliches Wohlbefinden",
+        wellbeingPhysicalScale: "(1 = starkes Unbehagen, 10 = fühle mich gut)",
+        wellbeingEmotional: "Emotionaler Zustand",
+        wellbeingEmotionalScale: "(1 = sehr ängstlich/verängstigt, 10 = ruhig und zuversichtlich)",
+        wellbeingNotes: "Noch etwas, das Ihr Arzt wissen sollte?",
+        wellbeingNotesOptional: "(optional)",
+        wellbeingCancel: "Abbrechen",
+        wellbeingGenerate: "Meinen Bericht Erstellen",
+        wellbeingPlaceholder: "z.B., Ich schlafe schlecht deswegen, mein Schmerz wird nachts schlimmer...",
     },
     pt: {
         splashSubtitle: "Seu Assistente de Saúde",
@@ -2116,7 +2232,20 @@ var T = {
         optCurrent: "Fumante atual",
         optFullMobile: "Totalmente móvel",
         optLimited: "Algumas limitações",
-        optAssistive: "Usa dispositivos de assistência"
+        optAssistive: "Usa dispositivos de assistência",
+        priSideEffects: "Minimizar efeitos colaterais",
+        generateReport: "📋 Gerar Relatório",
+        wellbeingTitle: "Antes de gerar seu relatório...",
+        wellbeingSubtitle: "Ajude seu médico a entender como você está se sentindo.",
+        wellbeingPhysical: "Conforto físico",
+        wellbeingPhysicalScale: "(1 = muito desconforto, 10 = me sentindo bem)",
+        wellbeingEmotional: "Estado emocional",
+        wellbeingEmotionalScale: "(1 = muito ansioso/assustado, 10 = calmo e confiante)",
+        wellbeingNotes: "Mais alguma coisa que quer que seu médico saiba?",
+        wellbeingNotesOptional: "(opcional)",
+        wellbeingCancel: "Cancelar",
+        wellbeingGenerate: "Gerar Meu Relatório",
+        wellbeingPlaceholder: "ex., Tenho perdido sono por isso, minha dor piora à noite...",
     },
     ja: {
         splashSubtitle: "健康理解アシスタント",
@@ -2248,7 +2377,20 @@ var T = {
         optCurrent: "現在吸っている",
         optFullMobile: "完全に動ける",
         optLimited: "一部制限あり",
-        optAssistive: "補助器具を使用"
+        optAssistive: "補助器具を使用",
+        priSideEffects: "副作用の最小化",
+        generateReport: "📋 レポートを生成",
+        wellbeingTitle: "レポートを生成する前に...",
+        wellbeingSubtitle: "今どのようにお感じかを医師に伝えてください。",
+        wellbeingPhysical: "身体的な快適さ",
+        wellbeingPhysicalScale: "(1 = 非常に不快, 10 = 快適)",
+        wellbeingEmotional: "精神的な状態",
+        wellbeingEmotionalScale: "(1 = 非常に不安/恐怖, 10 = 穏やかで自信がある)",
+        wellbeingNotes: "医師に伝えたいことは他にありますか？",
+        wellbeingNotesOptional: "（任意）",
+        wellbeingCancel: "キャンセル",
+        wellbeingGenerate: "レポートを生成する",
+        wellbeingPlaceholder: "例：これで眠れなくなっています、夜になると痛みが悪化します...",
     },
     ko: {
         splashSubtitle: "건강 이해 도우미",
@@ -2380,7 +2522,20 @@ var T = {
         optCurrent: "현재 흡연자",
         optFullMobile: "완전 이동 가능",
         optLimited: "일부 제한",
-        optAssistive: "보조 기구 사용"
+        optAssistive: "보조 기구 사용",
+        priSideEffects: "부작용 최소화",
+        generateReport: "📋 보고서 생성",
+        wellbeingTitle: "보고서를 생성하기 전에...",
+        wellbeingSubtitle: "지금 어떻게 느끼는지 의사에게 알려주세요.",
+        wellbeingPhysical: "신체적 편안함",
+        wellbeingPhysicalScale: "(1 = 매우 불편함, 10 = 편안함)",
+        wellbeingEmotional: "감정 상태",
+        wellbeingEmotionalScale: "(1 = 매우 불안/두려움, 10 = 차분하고 자신감 있음)",
+        wellbeingNotes: "의사에게 알리고 싶은 다른 것이 있나요?",
+        wellbeingNotesOptional: "(선택 사항)",
+        wellbeingCancel: "취소",
+        wellbeingGenerate: "내 보고서 생성",
+        wellbeingPlaceholder: "예: 이것 때문에 잠을 못 자고 있어요, 밤에 통증이 심해져요...",
     },
     ar: {
         splashSubtitle: "مساعدك الصحي",
@@ -2512,7 +2667,20 @@ var T = {
         optCurrent: "مدخن حالي",
         optFullMobile: "متحرك بالكامل",
         optLimited: "بعض القيود",
-        optAssistive: "أستخدم أدوات مساعدة"
+        optAssistive: "أستخدم أدوات مساعدة",
+        priSideEffects: "تقليل الآثار الجانبية",
+        generateReport: "📋 إنشاء التقرير",
+        wellbeingTitle: "قبل إنشاء تقريرك...",
+        wellbeingSubtitle: "ساعد طبيبك على فهم كيف تشعر الآن.",
+        wellbeingPhysical: "الراحة الجسدية",
+        wellbeingPhysicalScale: "(1 = إزعاج شديد, 10 = أشعر بخير)",
+        wellbeingEmotional: "الحالة العاطفية",
+        wellbeingEmotionalScale: "(1 = قلق/خائف جداً, 10 = هادئ وواثق)",
+        wellbeingNotes: "هل هناك أي شيء آخر تريد أن يعرفه طبيبك؟",
+        wellbeingNotesOptional: "(اختياري)",
+        wellbeingCancel: "إلغاء",
+        wellbeingGenerate: "إنشاء تقريري",
+        wellbeingPlaceholder: "مثال: لم أنم بسبب هذا، يزداد ألمي في الليل...",
     },
     hi: {
         splashSubtitle: "आपका स्वास्थ्य सहायक",
@@ -2644,7 +2812,20 @@ var T = {
         optCurrent: "वर्तमान धूम्रपानी",
         optFullMobile: "पूर्ण गतिशील",
         optLimited: "कुछ सीमाएं",
-        optAssistive: "सहायक उपकरण का उपयोग"
+        optAssistive: "सहायक उपकरण का उपयोग",
+        priSideEffects: "दुष्प्रभाव कम करें",
+        generateReport: "📋 रिपोर्ट बनाएं",
+        wellbeingTitle: "रिपोर्ट बनाने से पहले...",
+        wellbeingSubtitle: "अपने डॉक्टर को बताएं कि आप अभी कैसा महसूस कर रहे हैं।",
+        wellbeingPhysical: "शारीरिक आराम",
+        wellbeingPhysicalScale: "(1 = बहुत असुविधा, 10 = ठीक महसूस हो रहा है)",
+        wellbeingEmotional: "भावनात्मक स्थिति",
+        wellbeingEmotionalScale: "(1 = बहुत चिंतित/डरा हुआ, 10 = शांत और आत्मविश्वासी)",
+        wellbeingNotes: "क्या आप अपने डॉक्टर को कुछ और बताना चाहते हैं?",
+        wellbeingNotesOptional: "(वैकल्पिक)",
+        wellbeingCancel: "रद्द करें",
+        wellbeingGenerate: "मेरी रिपोर्ट बनाएं",
+        wellbeingPlaceholder: "उदा., इस वजह से मुझे नींद नहीं आ रही, रात को दर्द बढ़ जाता है...",
     }
 };
 
@@ -2823,6 +3004,41 @@ function changeLanguage(lang) {
     if (document.getElementById('optLimited')) document.getElementById('optLimited').textContent = t.optLimited || "Some limitations";
     if (document.getElementById('optAssistive')) document.getElementById('optAssistive').textContent = t.optAssistive || "Use assistive devices";
     
+    // Wellbeing modal translations
+    if (document.getElementById('wellbeingTitle') && t.wellbeingTitle) {
+        document.getElementById('wellbeingTitle').textContent = t.wellbeingTitle;
+    }
+    if (document.getElementById('wellbeingSubtitle') && t.wellbeingSubtitle) {
+        document.getElementById('wellbeingSubtitle').textContent = t.wellbeingSubtitle;
+    }
+    if (document.getElementById('wellbeingPhysicalLabel') && t.wellbeingPhysical) {
+        document.getElementById('wellbeingPhysicalLabel').textContent = t.wellbeingPhysical;
+    }
+    if (document.getElementById('wellbeingPhysicalScale') && t.wellbeingPhysicalScale) {
+        document.getElementById('wellbeingPhysicalScale').textContent = t.wellbeingPhysicalScale;
+    }
+    if (document.getElementById('wellbeingEmotionalLabel') && t.wellbeingEmotional) {
+        document.getElementById('wellbeingEmotionalLabel').textContent = t.wellbeingEmotional;
+    }
+    if (document.getElementById('wellbeingEmotionalScale') && t.wellbeingEmotionalScale) {
+        document.getElementById('wellbeingEmotionalScale').textContent = t.wellbeingEmotionalScale;
+    }
+    if (document.getElementById('wellbeingNotesLabel') && t.wellbeingNotes) {
+        document.getElementById('wellbeingNotesLabel').textContent = t.wellbeingNotes;
+    }
+    if (document.getElementById('patientNotes') && t.wellbeingPlaceholder) {
+        document.getElementById('patientNotes').placeholder = t.wellbeingPlaceholder;
+    }
+    if (document.getElementById('wellbeingCancelBtn') && t.wellbeingCancel) {
+        document.getElementById('wellbeingCancelBtn').textContent = t.wellbeingCancel;
+    }
+    if (document.getElementById('wellbeingGenerateBtn') && t.wellbeingGenerate) {
+        document.getElementById('wellbeingGenerateBtn').textContent = t.wellbeingGenerate;
+    }
+    if (document.getElementById('generateReportBtn') && t.generateReport) {
+        document.getElementById('generateReportBtn').textContent = t.generateReport;
+    }
+
     // Update context status
     updateContextStatus();
     
@@ -3162,11 +3378,23 @@ function addMessage(text, role, isCrisis) {
     var div = document.createElement('div');
     div.className = 'message ' + role;
     var bubbleClass = isCrisis ? 'message-bubble crisis' : 'message-bubble';
-    var formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    var formatted = text
+        .replace(/#{1,6}\s*/g, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/---/g, '')
+        .replace(/^>\s*/gm, '')
+        .replace(/^[-•]\s/gm, '• ')
+        .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+        .replace(/\n/g, '<br>');
     div.innerHTML = '<div class="' + bubbleClass + '">' + formatted + '</div>' +
                     '<div class="message-time">' + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + '</div>';
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
+    // Show generate report button after first assistant message
+    if (role === 'assistant') {
+        document.getElementById('generateReportBtn').style.display = 'block';
+    }
 }
 
 function showTyping() {
@@ -3441,6 +3669,91 @@ function fetchHospitals(lat, lon, radius) {
         btn.disabled = false;
         btn.textContent = t.searchBtn;
         results.innerHTML = '<div class="no-results">Unable to search hospitals. Make sure the server is running.</div>';
+    });
+}
+
+// =====================================================
+// WELLBEING & REPORT FUNCTIONS
+// =====================================================
+var wellbeingData = { physical: null, emotional: null, notes: '' };
+
+function openWellbeingModal() {
+    wellbeingData = { physical: null, emotional: null, notes: '' };
+    document.getElementById('patientNotes').value = '';
+    // Reset score buttons
+    document.querySelectorAll('.score-btn').forEach(function(btn) {
+        btn.classList.remove('selected');
+    });
+    document.getElementById('wellbeingOverlay').style.display = 'flex';
+}
+
+function closeWellbeingModal() {
+    document.getElementById('wellbeingOverlay').style.display = 'none';
+}
+
+function selectScore(type, score) {
+    wellbeingData[type] = score;
+    var group = document.getElementById(type + 'ScoreGroup');
+    var buttons = group.querySelectorAll('.score-btn');
+    for (var i = 0; i < buttons.length; i++) {
+        if (parseInt(buttons[i].getAttribute('data-score')) === score) {
+            buttons[i].classList.add('selected');
+            buttons[i].style.background = '#1e3a8a';
+            buttons[i].style.color = '#fff';
+            buttons[i].style.borderColor = '#1e3a8a';
+        } else {
+            buttons[i].classList.remove('selected');
+            buttons[i].style.background = '';
+            buttons[i].style.color = '';
+            buttons[i].style.borderColor = '';
+        }
+    }
+}
+
+function generateReport() {
+    wellbeingData.notes = document.getElementById('patientNotes').value;
+    closeWellbeingModal();
+
+    // Collect chat messages from the DOM
+    var messages = [];
+    document.querySelectorAll('.message').forEach(function(msg) {
+        var bubble = msg.querySelector('.message-bubble');
+        if (bubble) {
+            messages.push({
+                role: msg.classList.contains('user') ? 'user' : 'assistant',
+                content: bubble.innerText
+            });
+        }
+    });
+
+    if (messages.length === 0) {
+        alert('Please have a conversation first before generating a report.');
+        return;
+    }
+
+    // Send to Flask to generate PDF
+    fetch('/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            messages: messages,
+            profile: userProfile,
+            wellbeing: wellbeingData,
+            language: currentLang
+        })
+    })
+    .then(function(r) { return r.blob(); })
+    .then(function(blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'MedGuide_Report.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+    })
+    .catch(function(e) {
+        console.error('Report error:', e);
+        alert('Error generating report. Please try again.');
     });
 }
 
