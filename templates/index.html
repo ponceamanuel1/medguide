@@ -1152,16 +1152,24 @@
                             </div>
                         </div>
                     </div>
-                    <div class="chat-input-area">
-                        <div class="chat-input-wrapper">
-                            <input type="text" id="chatInput" placeholder="Ask a health question..." onkeypress="if(event.key==='Enter')sendMessage()">
-                            <button class="chat-send-btn" onclick="sendMessage()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
-                            </button>
-                        </div>
+        <div class="chat-input-wrapper">
+    <input type="file" id="imageUpload" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+    <div style="flex:1;display:flex;align-items:center;border:1px solid #d1d5db;border-radius:1.5rem;background:#fff;overflow:hidden;padding:0 0.5rem;">
+        <button onclick="document.getElementById('imageUpload').click()" style="background:none;border:none;cursor:pointer;color:#9ca3af;display:flex;align-items:center;padding:0.5rem;flex-shrink:0;" title="Upload image">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+        </button>
+        <input type="text" id="chatInput" placeholder="Ask a health question or upload an image..." onkeypress="if(event.key==='Enter')sendMessage()" style="flex:1;border:none;outline:none;font-size:0.9rem;font-family:inherit;padding:0.75rem 0.5rem;background:transparent;">
+    </div>
+    <button class="chat-send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+    </button>
+</div>
                         <p class="chat-disclaimer" id="chatDisclaimer">Educational only. Always consult a healthcare professional.</p>
                     </div>
                 </div>
@@ -1382,6 +1390,34 @@ var currentOnboardingStep = 0;
 var userProfile = null;
 var currentProfileId = null;
 var currentUserId = null
+var pendingImage = null;
+
+function handleImageUpload(input) {
+    var file = input.files[0];
+    if (!file) return;
+    
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        pendingImage = {
+            data: e.target.result.split(',')[1], // base64
+            type: file.type,
+            preview: e.target.result
+        };
+        
+        // Show preview bar
+        document.getElementById('imagePreviewThumb').src = e.target.result;
+        document.getElementById('imagePreviewBar').style.display = 'flex';
+        document.getElementById('chatInput').placeholder = 'Ask about this image... (or just send to analyze)';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImageUpload() {
+    pendingImage = null;
+    document.getElementById('imageUpload').value = '';
+    document.getElementById('imagePreviewBar').style.display = 'none';
+    document.getElementById('chatInput').placeholder = 'Ask a health question or upload an image...';
+}
 
 // =====================================================
 // COMPLETE TRANSLATIONS - ALL 10 LANGUAGES
@@ -3414,7 +3450,9 @@ function sendMessage() {
     if (!msg) return;
 
     document.getElementById('chatWelcome').style.display = 'none';
-    addMessage(msg, 'user');
+    if (!pendingImage) {
+        addMessage(msg, 'user');
+    }
     input.value = '';
     showTyping();
 
@@ -3429,10 +3467,47 @@ function sendMessage() {
         profile_id: currentProfileId
     };
 
+    var payload = {message: msg, context: context};
+    
+    // Add image if pending
+    if (pendingImage) {
+        payload.image = {
+            data: pendingImage.data,
+            type: pendingImage.type
+        };
+        // Show image in chat
+        var imgDiv = document.createElement('div');
+        imgDiv.className = 'message user';
+        imgDiv.innerHTML = '<div class="message-bubble" style="padding:0.5rem;">' +
+            '<img src="' + pendingImage.preview + '" style="max-width:200px;max-height:200px;border-radius:0.5rem;display:block;">' +
+            (msg ? '<p style="margin-top:0.5rem;">' + msg : '') + '</p></div>' +
+            '<div class="message-time">' + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + '</div>';
+        document.getElementById('chatMessages').appendChild(imgDiv);
+        clearImageUpload();
+    }
+
+    var payload = {message: msg, context: context};
+    
+    if (pendingImage) {
+        payload.image = {
+            data: pendingImage.data,
+            type: pendingImage.type
+        };
+        var imgDiv = document.createElement('div');
+        imgDiv.className = 'message user';
+        imgDiv.innerHTML = '<div class="message-bubble" style="padding:0.5rem;">' +
+            '<img src="' + pendingImage.preview + '" style="max-width:200px;max-height:200px;border-radius:0.5rem;display:block;">' +
+            (msg ? '<p style="margin-top:0.5rem;">' + msg + '</p>' : '') + '</div>' +
+            '<div class="message-time">' + new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + '</div>';
+        document.getElementById('chatMessages').appendChild(imgDiv);
+        document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        clearImageUpload();
+    }
+
     fetch('/chat', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({message: msg, context: context})
+        body: JSON.stringify(payload)
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {

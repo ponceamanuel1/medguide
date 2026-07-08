@@ -43,18 +43,36 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-def ollama_chat(system_prompt, user_prompt):
+def ollama_chat(system_prompt, user_prompt, image=None):
     try:
+        if image:
+            messages = [{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": image.get('type', 'image/jpeg'),
+                            "data": image.get('data'),
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": user_prompt
+                    }
+                ]
+            }]
+        else:
+            messages = [{"role": "user", "content": user_prompt}]
+
         message = anthropic_client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1024,
             system=system_prompt,
-            messages=[
-                {"role": "user", "content": user_prompt}
-            ]
+            messages=messages
         )
         text = message.content[0].text
-        # Strip markdown formatting
         import re
         text = re.sub(r'#{1,6}\s*', '', text)
         text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
@@ -63,7 +81,6 @@ def ollama_chat(system_prompt, user_prompt):
         text = re.sub(r'^---+$', '', text, flags=re.MULTILINE)
         text = re.sub(r'^>\s*', '', text, flags=re.MULTILINE)
         text = re.sub(r'^[-•]\s', '', text, flags=re.MULTILINE)
-        # Remove emojis
         emoji_pattern = re.compile("["
             u"\U0001F600-\U0001F64F"
             u"\U0001F300-\U0001F5FF"
@@ -434,6 +451,7 @@ RULES:
 End with: "Always consult your healthcare provider for personalized advice."
 
 TONE: Warm, supportive, conversational - like a knowledgeable friend who cares."""
+
 
     lang_map = {
         'es': '\n\nRespond entirely in Spanish. Use these Spanish section labels exactly: "Contexto:" instead of "Context:", "Consulta:" instead of "Check-In:", "Preguntas para tu Médico:" instead of "Questions for Your Doctor:", "Importante:" instead of "Important:", and "Siempre consulta a tu proveedor de salud para consejos personalizados." instead of "Always consult your healthcare provider for personalized advice."',
@@ -941,6 +959,7 @@ def chat():
         message = data.get('message', '').strip()
         context = data.get('context', {})
         language = context.get('language', 'en')
+        image = data.get('image')
         
         if not message:
             return jsonify({'error': 'Please enter a message'}), 400
@@ -998,7 +1017,16 @@ def chat():
         context_str = "\n".join(parts) if parts else "No additional context."
         user_prompt = f"Patient Context:\n{context_str}\n\nQuestion: {message}\n\nProvide a helpful, educational response. Consider the patient's background, lifestyle, and priorities when relevant."
         
-        response = ollama_chat(get_system_prompt(language), user_prompt)
+        if image:
+            user_prompt = f"""The user has shared an image of a physical symptom or medical document. 
+Please analyze what you can see and provide educational information about it.
+IMPORTANT: Always remind the user this is NOT a medical diagnosis and they should see a doctor.
+
+User's question/message: {message if message else 'Please analyze this image and tell me what you observe.'}
+
+{user_prompt}"""
+            
+        response = ollama_chat(get_system_prompt(language), user_prompt, image=image)
         if response:
             profile_id = context.get('profile_id')
             if profile_id:
