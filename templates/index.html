@@ -723,28 +723,29 @@
             .checkbox-group { grid-template-columns: 1fr; }
         }
         .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 0.75rem;
-            background: #f8fafc;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-            border: 1px solid #e5e7eb;
-            transition: all 0.2s;
-        }
-        .checkbox-item:hover { background: #eff6ff; border-color: #bfdbfe; }
-        .checkbox-item input {
-            width: 18px;
-            height: 18px;
-            accent-color: #3b82f6;
-            margin: 0;
-            flex-shrink: 0;
-        }
-        .checkbox-item span {
-            line-height: 1.3;
-        }
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    background: #f8fafc;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+}
+.checkbox-item:hover { background: #eff6ff; border-color: #bfdbfe; }
+.checkbox-item input {
+    width: 18px;
+    height: 18px;
+    accent-color: #3b82f6;
+    margin: 0 0.5rem 0 0;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.checkbox-item span {
+    line-height: 1.3;
+}
         /* Insurance Badges */
         .insurance-badge {
             display: inline-block;
@@ -1201,43 +1202,116 @@
         </div>
 
         <!-- Hospital Tab -->
-        <div id="hospital-finder" class="tab-content">
-            <div class="card">
-                <h2 id="hospitalTitle">Find Hospitals Near You</h2>
-                <div class="emergency-banner">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <p id="emergencyText"><strong>If this is a life-threatening emergency, call 911 immediately.</strong></p>
-                </div>
-                <div class="form-group">
-                    <label id="locationLabel">Your Location</label>
-                    <div class="location-input-group">
-                        <input type="text" id="locationInput" placeholder="Enter city, state or ZIP code">
-                        <button class="btn-location" id="locateBtn" onclick="useMyLocation()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="3"></circle>
-                                <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
-                            </svg>
-                            <span id="locateBtnText">Use My Location</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label id="radiusLabel">Search Radius</label>
-                    <select id="radiusSelect">
-                        <option value="8047" id="radius5">5 miles</option>
-                        <option value="16093" selected id="radius10">10 miles</option>
-                        <option value="40234" id="radius25">25 miles</option>
-                        <option value="80467" id="radius50">50 miles</option>
-                    </select>
-                </div>
-                <button class="btn-primary" id="searchBtn" onclick="searchHospitals()">Search Hospitals</button>
-                <div id="hospitalResults" style="margin-top:1rem"></div>
-            </div>
+<div id="hospital-finder" class="tab-content">
+    <div class="card">
+        <h2 id="hospitalTitle">Find Hospitals Near You</h2>
+        
+        <div class="emergency-banner">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p id="emergencyText"><strong>If this is a life-threatening emergency, call 911 immediately.</strong></p>
         </div>
+
+        <!-- Search Type Toggle -->
+        <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem;">
+            <button id="toggleHospitals" onclick="setSearchMode('hospitals')" 
+                style="flex:1;padding:0.6rem;border-radius:0.5rem;border:2px solid #1e3a8a;background:#1e3a8a;color:#fff;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;">
+                Hospitals & Clinics
+            </button>
+            <button id="toggleDoctors" onclick="setSearchMode('doctors')"
+                style="flex:1;padding:0.6rem;border-radius:0.5rem;border:2px solid #d1d5db;background:#fff;color:#374151;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;">
+                Find by Specialty
+            </button>
+        </div>
+
+        <!-- Hospital Search (default) -->
+        <div id="hospitalSearchSection">
+            <div class="form-group">
+                <label id="locationLabel">Your Location</label>
+                <div class="location-input-group">
+                    <input type="text" id="locationInput" placeholder="Enter city, state or ZIP code">
+                    <button class="btn-location" id="locateBtn" onclick="useMyLocation()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
+                        </svg>
+                        <span id="locateBtnText">Use My Location</span>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label id="radiusLabel">Search Radius</label>
+                <select id="radiusSelect">
+                    <option value="8047" id="radius5">5 miles</option>
+                    <option value="16093" selected id="radius10">10 miles</option>
+                    <option value="40234" id="radius25">25 miles</option>
+                    <option value="80467" id="radius50">50 miles</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="searchBtn" onclick="searchHospitals()">Search Hospitals</button>
+        </div>
+
+        <!-- Doctor Search -->
+        <div id="doctorSearchSection" style="display:none;">
+            <div class="form-group">
+                <label>Specialty</label>
+                <select id="specialtySelect" onchange="handleSpecialtySelect(this.value)">
+                    <option value="">Select a specialty...</option>
+                    <option value="cardiologist">Cardiologist (Heart)</option>
+                    <option value="dermatologist">Dermatologist (Skin)</option>
+                    <option value="neurologist">Neurologist (Brain & Nerves)</option>
+                    <option value="orthopedic">Orthopedic (Bones & Joints)</option>
+                    <option value="pediatrician">Pediatrician (Children)</option>
+                    <option value="psychiatrist">Psychiatrist (Mental Health)</option>
+                    <option value="gynecologist">OB/GYN (Women's Health)</option>
+                    <option value="ophthalmologist">Ophthalmologist (Eyes)</option>
+                    <option value="dentist">Dentist (Teeth)</option>
+                    <option value="physical therapist">Physical Therapist</option>
+                    <option value="urgent care">Urgent Care</option>
+                    <option value="primary care">Primary Care / Family Doctor</option>
+                    <option value="endocrinologist">Endocrinologist (Hormones/Diabetes)</option>
+                    <option value="gastroenterologist">Gastroenterologist (Digestive)</option>
+                    <option value="pulmonologist">Pulmonologist (Lungs)</option>
+                    <option value="rheumatologist">Rheumatologist (Arthritis)</option>
+                    <option value="urologist">Urologist</option>
+                    <option value="other">Other (type below)</option>
+                </select>
+            </div>
+            <div id="specialtyOtherGroup" style="display:none;" class="form-group">
+                <label>Type your specialty</label>
+                <input type="text" id="specialtyOther" placeholder="e.g., Allergist, Oncologist...">
+            </div>
+            <div class="form-group">
+                <label>Your Location</label>
+                <div class="location-input-group">
+                    <input type="text" id="doctorLocationInput" placeholder="Enter city, state or ZIP code">
+                    <button class="btn-location" onclick="useMyLocationForDoctors()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 2v2m0 16v2M2 12h2m16 0h2"></path>
+                        </svg>
+                        <span>Use My Location</span>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Search Radius</label>
+                <select id="doctorRadiusSelect">
+                    <option value="8047">5 miles</option>
+                    <option value="16093" selected>10 miles</option>
+                    <option value="40234">25 miles</option>
+                    <option value="80467">50 miles</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="searchDoctorBtn" onclick="searchDoctors()">Find Specialists</button>
+        </div>
+
+        <div id="hospitalResults" style="margin-top:1rem"></div>
+    </div>
+</div>
 
         <!-- Wellbeing Check-in Modal -->
 <div id="wellbeingOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
@@ -3789,6 +3863,158 @@ function generateReport() {
         alert('Error generating report. Please try again.');
     });
 }
+
+// =====================================================
+// DOCTOR SEARCH FUNCTIONS
+// =====================================================
+var searchMode = 'hospitals';
+
+function setSearchMode(mode) {
+    searchMode = mode;
+    if (mode === 'hospitals') {
+        document.getElementById('hospitalSearchSection').style.display = 'block';
+        document.getElementById('doctorSearchSection').style.display = 'none';
+        document.getElementById('toggleHospitals').style.background = '#1e3a8a';
+        document.getElementById('toggleHospitals').style.color = '#fff';
+        document.getElementById('toggleHospitals').style.borderColor = '#1e3a8a';
+        document.getElementById('toggleDoctors').style.background = '#fff';
+        document.getElementById('toggleDoctors').style.color = '#374151';
+        document.getElementById('toggleDoctors').style.borderColor = '#d1d5db';
+    } else {
+        document.getElementById('hospitalSearchSection').style.display = 'none';
+        document.getElementById('doctorSearchSection').style.display = 'block';
+        document.getElementById('toggleDoctors').style.background = '#1e3a8a';
+        document.getElementById('toggleDoctors').style.color = '#fff';
+        document.getElementById('toggleDoctors').style.borderColor = '#1e3a8a';
+        document.getElementById('toggleHospitals').style.background = '#fff';
+        document.getElementById('toggleHospitals').style.color = '#374151';
+        document.getElementById('toggleHospitals').style.borderColor = '#d1d5db';
+    }
+    document.getElementById('hospitalResults').innerHTML = '';
+}
+
+function handleSpecialtySelect(value) {
+    var otherGroup = document.getElementById('specialtyOtherGroup');
+    otherGroup.style.display = value === 'other' ? 'block' : 'none';
+}
+
+function useMyLocationForDoctors() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById('doctorLocationInput').value = 
+            pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4);
+    });
+}
+
+function searchDoctors() {
+    var specialty = document.getElementById('specialtySelect').value;
+    if (specialty === 'other') {
+        specialty = document.getElementById('specialtyOther').value.trim();
+    }
+    var locationInput = document.getElementById('doctorLocationInput').value.trim();
+    var radius = document.getElementById('doctorRadiusSelect').value;
+    var results = document.getElementById('hospitalResults');
+    var btn = document.getElementById('searchDoctorBtn');
+
+    if (!specialty) {
+        alert('Please select a specialty');
+        return;
+    }
+    if (!locationInput) {
+        alert('Please enter a location');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Searching...';
+    results.innerHTML = '<div class="no-results"><div style="display:flex;justify-content:center;gap:4px;padding:1rem;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>Searching for specialists...</div>';
+
+    var coordsMatch = locationInput.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+
+    if (coordsMatch) {
+        fetchDoctors(parseFloat(coordsMatch[1]), parseFloat(coordsMatch[2]), radius, specialty);
+    } else {
+        fetch('/geocode?location=' + encodeURIComponent(locationInput))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) {
+                results.innerHTML = '<div class="no-results">' + data.error + '</div>';
+                btn.disabled = false;
+                btn.textContent = 'Find Specialists';
+            } else {
+                fetchDoctors(data.lat, data.lon, radius, specialty);
+            }
+        })
+        .catch(function() {
+            results.innerHTML = '<div class="no-results">Error finding location.</div>';
+            btn.disabled = false;
+            btn.textContent = 'Find Specialists';
+        });
+    }
+}
+
+function fetchDoctors(lat, lon, radius, specialty) {
+    var results = document.getElementById('hospitalResults');
+    var btn = document.getElementById('searchDoctorBtn');
+    var userInsurance = userProfile ? (userProfile.insurance || '') : '';
+
+    fetch('/find-doctors?lat=' + lat + '&lon=' + lon + '&radius=' + radius + '&specialty=' + encodeURIComponent(specialty))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = 'Find Specialists';
+
+        if (!data.clinics || data.clinics.length === 0) {
+            results.innerHTML = '<div class="no-results">No ' + specialty + ' clinics found nearby. Try expanding your search radius or <a href="https://www.google.com/search?q=' + encodeURIComponent(specialty + ' near me') + '" target="_blank">search Google</a>.</div>';
+            return;
+        }
+
+        var majorInsurers = ['bluecross', 'aetna', 'united', 'cigna', 'humana', 'kaiser', 'molina', 'centene'];
+        var govInsurance = ['medicare', 'medicaid'];
+
+        function getInsuranceBadge(clinicName, insurance) {
+            if (!insurance || insurance === '' || insurance === 'none') return '';
+            var name = clinicName.toLowerCase();
+            var isLarge = name.indexOf('medical center') !== -1 || name.indexOf('hospital') !== -1 ||
+                          name.indexOf('clinic') !== -1 || name.indexOf('health') !== -1;
+            if (govInsurance.indexOf(insurance) !== -1) {
+                return '<span class="insurance-badge insurance-likely">Likely Accepts ' + insurance.charAt(0).toUpperCase() + insurance.slice(1) + '</span>';
+            }
+            if (majorInsurers.indexOf(insurance) !== -1 && isLarge) {
+                return '<span class="insurance-badge insurance-likely">Likely Accepts Your Insurance</span>';
+            }
+            return '<span class="insurance-badge insurance-verify">Call to Verify Insurance</span>';
+        }
+
+        var html = '<p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;">Found ' + data.clinics.length + ' ' + specialty + ' location(s) near you</p>';
+
+        for (var i = 0; i < data.clinics.length; i++) {
+            var c = data.clinics[i];
+            var badge = getInsuranceBadge(c.name, userInsurance);
+            html += '<div class="hospital-card">';
+            html += '<div class="hospital-name">' + c.name + '</div>';
+            html += '<div style="font-size:0.8rem;color:#3b82f6;font-weight:500;margin-bottom:0.25rem;">🩺 ' + c.specialty + '</div>';
+            if (badge) html += '<div style="margin-bottom:0.4rem;">' + badge + '</div>';
+            if (c.address || c.city) {
+                html += '<div class="hospital-info">' + [c.address, c.city].filter(Boolean).join(', ') + '</div>';
+            }
+            html += '<div class="hospital-distance">' + c.distance + ' miles away</div>';
+            html += '<div class="hospital-actions">';
+            if (c.phone) html += '<a href="tel:' + c.phone + '" class="action-call">📞 Call to Book</a>';
+            html += '<a href="https://www.google.com/maps/dir/?api=1&destination=' + c.lat + ',' + c.lon + '" target="_blank" class="action-directions">Directions</a>';
+            html += '<a href="https://www.google.com/search?q=' + encodeURIComponent(specialty + ' doctors at ' + c.name + ' ' + (c.city || '')) + '" target="_blank" class="action-book">Find Doctors Here</a>';
+            html += '</div></div>';
+        }
+
+        results.innerHTML = html;
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Find Specialists';
+        results.innerHTML = '<div class="no-results">Error searching for specialists. Please try again.</div>';
+    });
+}
+
 
 // =====================================================
 // INITIALIZATION

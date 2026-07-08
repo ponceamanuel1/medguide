@@ -1129,6 +1129,117 @@ out center body;"""
         traceback.print_exc()
         return jsonify({'error': 'Error searching hospitals. Please try again.'}), 500
 
+@app.route('/find-doctors', methods=['GET'])
+def find_doctors():
+    try:
+        lat = float(request.args.get('lat'))
+        lon = float(request.args.get('lon'))
+        radius = int(request.args.get('radius', 16093))
+        specialty = request.args.get('specialty', '').strip().lower()
+
+        if not specialty:
+            return jsonify({'error': 'No specialty provided'}), 400
+
+        # Map common specialties to OSM healthcare tags
+        specialty_tags = {
+            'cardiologist': ['cardiologist', 'cardiology'],
+            'dermatologist': ['dermatologist', 'dermatology'],
+            'neurologist': ['neurologist', 'neurology'],
+            'orthopedic': ['orthopedics', 'orthopaedics'],
+            'pediatrician': ['paediatrician', 'pediatrics'],
+            'psychiatrist': ['psychiatry', 'mental_health'],
+            'gynecologist': ['gynaecology', 'gynecology', 'obstetrics'],
+            'ophthalmologist': ['ophthalmology', 'optometrist'],
+            'dentist': ['dentist'],
+            'physical therapist': ['physiotherapist', 'physical_therapy'],
+            'urgent care': ['clinic'],
+            'primary care': ['general', 'general_practitioner'],
+            'endocrinologist': ['endocrinology'],
+            'gastroenterologist': ['gastroenterology'],
+            'pulmonologist': ['pulmonology'],
+            'rheumatologist': ['rheumatology'],
+            'urologist': ['urology'],
+        }
+
+        tags = specialty_tags.get(specialty, [specialty])
+
+        # Build Overpass query
+        tag_queries = ''
+        for tag in tags:
+            tag_queries += f'node["healthcare"="{tag}"](around:{radius},{lat},{lon});'
+            tag_queries += f'way["healthcare"="{tag}"](around:{radius},{lat},{lon});'
+            tag_queries += f'node["amenity"="clinic"]["healthcare:speciality"~"{tag}",i](around:{radius},{lat},{lon});'
+            tag_queries += f'node["amenity"="doctors"]["healthcare:speciality"~"{tag}",i](around:{radius},{lat},{lon});'
+            tag_queries += f'node["name"~"{specialty}",i]["amenity"~"clinic|doctors|hospital"](around:{radius},{lat},{lon});'
+
+        query = f'[out:json][timeout:30];({tag_queries});out center body;'
+
+        OVERPASS_MIRRORS = [
+            "https://overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter",
+            "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+        ]
+
+        data = None
+        for mirror in OVERPASS_MIRRORS:
+            try:
+                r = requests.post(mirror, data={'data': query}, timeout=35,
+                                 headers={'User-Agent': 'MedGuide/1.0'})
+                r.raise_for_status()
+                data = r.json()
+                break
+            except Exception as e:
+                print(f"Mirror failed: {e}")
+                continue
+
+        if data is None:
+            return jsonify({'error': 'Search service temporarily unavailable'}), 503
+
+        from math import radians, sin, cos, sqrt, atan2
+        clinics = []
+        seen = set()
+
+        for el in data.get('elements', []):
+            tags_el = el.get('tags', {})
+            name = tags_el.get('name', '')
+            if not name or name in seen:
+                continue
+            seen.add(name)
+
+            if el['type'] == 'node':
+                h_lat, h_lon = el.get('lat'), el.get('lon')
+            else:
+                center = el.get('center', {})
+                h_lat, h_lon = center.get('lat'), center.get('lon')
+
+            if not h_lat or not h_lon:
+                continue
+
+            R = 3959
+            lat1, lon1, lat2, lon2 = map(radians, [lat, lon, h_lat, h_lon])
+            dlat, dlon = lat2 - lat1, lon2 - lon1
+            a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+            distance = R * 2 * atan2(sqrt(a), sqrt(1 - a))
+
+            clinics.append({
+                'name': name,
+                'lat': h_lat,
+                'lon': h_lon,
+                'distance': round(distance, 1),
+                'address': tags_el.get('addr:street', ''),
+                'city': tags_el.get('addr:city', ''),
+                'phone': tags_el.get('phone', tags_el.get('contact:phone', '')),
+                'specialty': specialty.title(),
+                'website': tags_el.get('website', ''),
+            })
+
+        clinics.sort(key=lambda x: x['distance'])
+        return jsonify({'clinics': clinics[:15]})
+
+    except Exception as e:
+        print(f"Find doctors error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/analyze-document', methods=['POST'])
 def analyze_document():
     temp_path = None
