@@ -20,6 +20,9 @@ UPLOAD_FOLDER = tempfile.gettempdir()
 MAX_CONTENT_LENGTH = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
@@ -804,6 +807,8 @@ def generate_report():
                 if not value:
                     return ''
                 vm = value_map.get(lang, {})
+                result = vm.get(value.lower(), value.capitalize())
+                print(f"translate_value: '{value}' -> '{result}' (lang={lang})")
                 return vm.get(value.lower(), value.capitalize())
 
             profile_data = []
@@ -1161,8 +1166,64 @@ def analyze_document():
         if len(text.strip()) < 10:
             return jsonify({'error': 'Could not extract text'}), 400
         
-        prompt = f"""Analyze this medical document. Respond in JSON format:
-{{"document_type":"type","key_findings":["finding1"],"general_meaning":"explanation","questions_for_doctor":["question1"]}}
+        force = request.form.get('force', 'false') == 'true'
+
+        # First, detect if document is medical
+        if force:
+            category = "MEDICAL"
+        else:
+            detection_prompt = f"""Look at this document and classify it into one of three categories:
+1. MEDICAL - clearly a medical document (lab results, prescriptions, doctor notes, discharge summaries, imaging reports, medical bills, insurance EOBs with medical codes, pharmacy receipts)
+2. AMBIGUOUS - could have medical relevance (general insurance documents, wellness documents, anything with some health terms)
+3. NOT_MEDICAL - clearly not medical (school assignments, report cards, essays, business documents, legal contracts, receipts for non-medical items)
+
+Respond with ONLY a JSON object like this:
+{{"category": "MEDICAL", "reason": "brief reason"}}
+
+Document text:
+{text[:2000]}"""
+
+        detection_response = ollama_chat(get_system_prompt(language), detection_prompt)
+        
+        category = "MEDICAL"
+        try:
+            match = re.search(r'\{[\s\S]*\}', detection_response)
+            if match:
+                detection = json.loads(match.group())
+                category = detection.get('category', 'MEDICAL').upper()
+        except:
+            category = "MEDICAL"
+
+        # Handle based on category
+        if category == "NOT_MEDICAL":
+            return jsonify({
+                'success': True,
+                'analysis': {
+                    'document_type': 'Non-Medical Document',
+                    'key_findings': [],
+                    'general_meaning': 'I am unable to analyze this document as it does not appear to be a medical document. MedGuide is designed to help you understand medical records, lab results, prescriptions, and other health-related documents. Please upload a medical document and I will be happy to help explain it in plain language.',
+                    'questions_for_doctor': [],
+                    'not_medical': True
+                }
+            })
+        
+        if category == "AMBIGUOUS":
+            return jsonify({
+                'success': True,
+                'analysis': {
+                    'document_type': 'Unclear Document Type',
+                    'key_findings': [],
+                    'general_meaning': 'This does not appear to be a typical medical document. Are you sure this is medical related? If you would like me to move forward, I can analyze it and translate any medical terms I find into plain language and give you the best explanation I can.',
+                    'questions_for_doctor': [],
+                    'ambiguous': True
+                }
+            })
+
+        # Clearly medical - analyze normally
+        prompt = f"""Analyze this medical document and respond in plain text (no markdown, no hashtags, no bullet points with dashes).
+
+Structure your response as JSON:
+{{"document_type":"type of medical document","key_findings":["finding 1","finding 2"],"general_meaning":"plain language explanation of what this document means","questions_for_doctor":["question 1","question 2","question 3"]}}
 
 Document: {text[:3000]}"""
         

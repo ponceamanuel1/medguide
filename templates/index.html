@@ -3470,6 +3470,39 @@ function analyzeDoc() {
     });
 }
 
+function analyzeDocForce() {
+    if (!selectedFile) return;
+    var t = T[currentLang] || T.en;
+    var btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    btn.textContent = t.analyzing;
+    
+    var formData = new FormData();
+    formData.append('document', selectedFile);
+    formData.append('language', currentLang);
+    formData.append('force', 'true');
+    
+    fetch('/analyze-document', {method: 'POST', body: formData})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = t.analyzeBtn;
+        var results = document.getElementById('docResults');
+        if (data.error) {
+            results.innerHTML = '<div class="no-results">' + data.error + '</div>';
+        } else {
+            var a = data.analysis;
+            var html = '<div class="analysis-section"><h3>' + (t.docType || 'Document Type') + '</h3><p>' + (a.document_type || 'Document') + '</p></div>';
+            html += '<div class="analysis-section"><h3>' + (t.whatMeans || 'What This Means') + '</h3><p>' + (a.general_meaning || '') + '</p></div>';
+            results.innerHTML = html;
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = t.analyzeBtn;
+    });
+}
+
 // =====================================================
 // HOSPITAL FUNCTIONS
 // =====================================================
