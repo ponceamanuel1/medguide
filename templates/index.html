@@ -1038,8 +1038,9 @@
 
     <!-- Header -->
     <header class="header">
-        <div class="header-top">
-            <h1>MedGuide</h1>
+    <div class="header-top">
+        <h1>MedGuide</h1>
+        <div style="display:flex;align-items:center;gap:1rem;">
             <select id="languageSelector" class="language-selector" onchange="changeLanguage(this.value)">
                 <option value="en">English</option>
                 <option value="es">Español</option>
@@ -1052,9 +1053,17 @@
                 <option value="ar">العربية</option>
                 <option value="hi">हिन्दी</option>
             </select>
+            <button id="headerProfileBtn" onclick="showOnboarding()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:0.4rem 1rem;border-radius:2rem;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;display:none;align-items:center;gap:0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:0.3rem;">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span id="headerProfileName">Profile</span>
+            </button>
         </div>
-        <p class="subtitle" id="subtitle">Your personalized health understanding assistant</p>
-    </header>
+    </div>
+    <p class="subtitle" id="subtitle">Your personalized health understanding assistant</p>
+</header>
 
     <!-- Main Content -->
     <div class="main-container">
@@ -1094,13 +1103,12 @@
                     <div class="context-body">
                         <!-- Profile Banners -->
                         <div class="profile-banner" id="profileBanner" style="display:none">
-                            <span class="profile-banner-text" id="profileBannerText">Profile active</span>
-                            <button class="profile-banner-btn" onclick="showOnboarding()" id="editProfileBtn">Edit Profile</button>
-                        </div>
-                        <div class="profile-banner" id="createProfileBanner">
-                            <span class="profile-banner-text" id="createProfileText">Want personalized guidance?</span>
-                            <button class="profile-banner-btn" onclick="showOnboarding()" id="createProfileBtn">Create Profile</button>
-                        </div>
+    <span class="profile-banner-text" id="profileBannerText">Profile active</span>
+</div>
+                        <div class="profile-banner" id="createProfileBanner" style="display:none;">
+    <span class="profile-banner-text" id="createProfileText">Want personalized guidance?</span>
+    <button class="profile-banner-btn" onclick="showOnboarding()" id="createProfileBtn">Create Profile</button>
+</div>
                         
                         <div class="form-group">
                             <label id="lblMedications">Medications</label>
@@ -1421,6 +1429,49 @@ function clearImageUpload() {
     document.getElementById('imageUpload').value = '';
     document.getElementById('imagePreviewBar').style.display = 'none';
     document.getElementById('chatInput').placeholder = 'Ask a health question or upload an image...';
+}
+
+function showOnboarding() {
+    currentOnboardingStep = 0;
+    updateOnboardingStep();
+    document.getElementById('onboardingOverlay').classList.remove('hidden');
+
+    if (userProfile) {
+        if (userProfile.age) document.getElementById('profileAge').value = userProfile.age;
+        if (userProfile.gender) document.getElementById('profileGender').value = userProfile.gender;
+        if (userProfile.ethnicity) document.getElementById('profileEthnicity').value = userProfile.ethnicity;
+        if (userProfile.diet) document.getElementById('profileDiet').value = userProfile.diet;
+        if (userProfile.allergies) document.getElementById('profileAllergies').value = userProfile.allergies;
+        if (userProfile.alcohol) document.getElementById('profileAlcohol').value = userProfile.alcohol;
+        if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
+        if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
+        if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
+
+        if (userProfile.insurance) {
+            var knownValues = ['medicare','medicaid','bluecross','aetna','united','cigna','humana','kaiser','molina','centene','none'];
+            if (knownValues.indexOf(userProfile.insurance) !== -1) {
+                document.getElementById('profileInsuranceSelect').value = userProfile.insurance;
+            } else {
+                document.getElementById('profileInsuranceSelect').value = 'other';
+                document.getElementById('insuranceOtherGroup').style.display = 'block';
+                document.getElementById('profileInsuranceOther').value = userProfile.insurance;
+            }
+        }
+
+        if (userProfile.conditions && userProfile.conditions.length > 0) {
+            var condBoxes = document.querySelectorAll('#conditionsGroup input[type="checkbox"]');
+            for (var i = 0; i < condBoxes.length; i++) {
+                condBoxes[i].checked = userProfile.conditions.indexOf(condBoxes[i].value) !== -1;
+            }
+        }
+
+        if (userProfile.priorities && userProfile.priorities.length > 0) {
+            var priBoxes = document.querySelectorAll('#prioritiesGroup input[type="checkbox"]');
+            for (var i = 0; i < priBoxes.length; i++) {
+                priBoxes[i].checked = userProfile.priorities.indexOf(priBoxes[i].value) !== -1;
+            }
+        }
+    }
 }
 
 // =====================================================
@@ -3193,51 +3244,53 @@ function checkSavedProfile() {
                 };
                 currentProfileId = p.id;
 
-    if (userProfile.age) document.getElementById('ageRange').value = userProfile.age;
+                if (userProfile.age) document.getElementById('ageRange').value = userProfile.age;
 
-    // Pre-fill onboarding fields so they're ready when user clicks Edit Profile
-    if (userProfile.age) document.getElementById('profileAge').value = userProfile.age;
-    if (userProfile.gender) document.getElementById('profileGender').value = userProfile.gender;
-    if (userProfile.ethnicity) document.getElementById('profileEthnicity').value = userProfile.ethnicity;
-    if (userProfile.diet) document.getElementById('profileDiet').value = userProfile.diet;
-    if (userProfile.allergies) document.getElementById('profileAllergies').value = userProfile.allergies;
-    if (userProfile.alcohol) document.getElementById('profileAlcohol').value = userProfile.alcohol;
-    if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
-    if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
-    if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
+                if (userProfile.age) document.getElementById('profileAge').value = userProfile.age;
+                if (userProfile.gender) document.getElementById('profileGender').value = userProfile.gender;
+                if (userProfile.ethnicity) document.getElementById('profileEthnicity').value = userProfile.ethnicity;
+                if (userProfile.diet) document.getElementById('profileDiet').value = userProfile.diet;
+                if (userProfile.allergies) document.getElementById('profileAllergies').value = userProfile.allergies;
+                if (userProfile.alcohol) document.getElementById('profileAlcohol').value = userProfile.alcohol;
+                if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
+                if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
+                if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
 
-    // Add this line with the other pre-fills
-    if (userProfile.insurance) {
-        var knownValues = ['medicare','medicaid','bluecross','aetna','united','cigna','humana','kaiser','molina','centene','none'];
-        if (knownValues.indexOf(userProfile.insurance) !== -1) {
-         document.getElementById('profileInsuranceSelect').value = userProfile.insurance;
-        } else {
-            document.getElementById('profileInsuranceSelect').value = 'other';
-            document.getElementById('insuranceOtherGroup').style.display = 'block';
-            document.getElementById('profileInsuranceOther').value = userProfile.insurance;
-        }
-    }
+                if (userProfile.insurance) {
+                    var knownValues = ['medicare','medicaid','bluecross','aetna','united','cigna','humana','kaiser','molina','centene','none'];
+                    if (knownValues.indexOf(userProfile.insurance) !== -1) {
+                        document.getElementById('profileInsuranceSelect').value = userProfile.insurance;
+                    } else {
+                        document.getElementById('profileInsuranceSelect').value = 'other';
+                        document.getElementById('insuranceOtherGroup').style.display = 'block';
+                        document.getElementById('profileInsuranceOther').value = userProfile.insurance;
+                    }
+                }
 
-    // Pre-check conditions
-    if (userProfile.conditions && userProfile.conditions.length > 0) {
-        var condBoxes = document.querySelectorAll('#conditionsGroup input[type="checkbox"]');
-        for (var i = 0; i < condBoxes.length; i++) {
-            condBoxes[i].checked = userProfile.conditions.indexOf(condBoxes[i].value) !== -1;
-        }
-    }
+                if (userProfile.conditions && userProfile.conditions.length > 0) {
+                    var condBoxes = document.querySelectorAll('#conditionsGroup input[type="checkbox"]');
+                    for (var i = 0; i < condBoxes.length; i++) {
+                        condBoxes[i].checked = userProfile.conditions.indexOf(condBoxes[i].value) !== -1;
+                    }
+                }
 
-    // Pre-check priorities
-    if (userProfile.priorities && userProfile.priorities.length > 0) {
-        var priBoxes = document.querySelectorAll('#prioritiesGroup input[type="checkbox"]');
-        for (var i = 0; i < priBoxes.length; i++) {
-            priBoxes[i].checked = userProfile.priorities.indexOf(priBoxes[i].value) !== -1;
-        }
-    }
+                if (userProfile.priorities && userProfile.priorities.length > 0) {
+                    var priBoxes = document.querySelectorAll('#prioritiesGroup input[type="checkbox"]');
+                    for (var i = 0; i < priBoxes.length; i++) {
+                        priBoxes[i].checked = userProfile.priorities.indexOf(priBoxes[i].value) !== -1;
+                    }
+                }
 
                 document.getElementById('profileBanner').style.display = 'flex';
                 document.getElementById('profileBannerText').textContent = 'Welcome back, ' + user.email.split('@')[0] + '!';
                 document.getElementById('createProfileBanner').style.display = 'none';
                 document.getElementById('onboardingOverlay').classList.add('hidden');
+
+                var headerBtn = document.getElementById('headerProfileBtn');
+                if (headerBtn) {
+                    headerBtn.style.display = 'flex';
+                    document.getElementById('headerProfileName').textContent = user.email.split('@')[0];
+                }
 
                 updateContextStatus();
             } else {
@@ -3257,65 +3310,10 @@ function checkSavedProfile() {
         document.getElementById('profileBanner').style.display = 'none';
     }
 }
-function handleInsuranceSelect(value) {
-    var otherGroup = document.getElementById('insuranceOtherGroup');
-    if (value === 'other') {
-        otherGroup.style.display = 'block';
-    } else {
-        otherGroup.style.display = 'none';
-        document.getElementById('profileInsuranceOther').value = '';
-    }
-}
-
-function showOnboarding() {
-    currentOnboardingStep = 0;
-    updateOnboardingStep();
-    document.getElementById('onboardingOverlay').classList.remove('hidden');
-
-    // Pre-fill form fields from saved profile
-    if (userProfile) {
-        if (userProfile.age) document.getElementById('profileAge').value = userProfile.age;
-        if (userProfile.gender) document.getElementById('profileGender').value = userProfile.gender;
-        if (userProfile.ethnicity) document.getElementById('profileEthnicity').value = userProfile.ethnicity;
-        if (userProfile.diet) document.getElementById('profileDiet').value = userProfile.diet;
-        if (userProfile.allergies) document.getElementById('profileAllergies').value = userProfile.allergies;
-        if (userProfile.alcohol) document.getElementById('profileAlcohol').value = userProfile.alcohol;
-        if (userProfile.smoking) document.getElementById('profileSmoking').value = userProfile.smoking;
-        if (userProfile.mobility) document.getElementById('profileMobility').value = userProfile.mobility;
-        if (userProfile.goals) document.getElementById('profileGoals').value = userProfile.goals;
-        // Pre-fill insurance
-        if (userProfile.insurance) {
-            var insuranceSelect = document.getElementById('profileInsuranceSelect');
-            var knownValues = ['medicare','medicaid','bluecross','aetna','united','cigna','humana','kaiser','molina','centene','none'];
-        if (knownValues.indexOf(userProfile.insurance) !== -1) {
-            insuranceSelect.value = userProfile.insurance;
-        } else {
-            insuranceSelect.value = 'other';
-            document.getElementById('insuranceOtherGroup').style.display = 'block';
-            document.getElementById('profileInsuranceOther').value = userProfile.insurance;
-        }
-    }
-        // Pre-check conditions checkboxes
-        if (userProfile.conditions && userProfile.conditions.length > 0) {
-            var condBoxes = document.querySelectorAll('#conditionsGroup input[type="checkbox"]');
-            for (var i = 0; i < condBoxes.length; i++) {
-                condBoxes[i].checked = userProfile.conditions.indexOf(condBoxes[i].value) !== -1;
-            }
-        }
-
-        // Pre-check priorities checkboxes
-        if (userProfile.priorities && userProfile.priorities.length > 0) {
-            var priBoxes = document.querySelectorAll('#prioritiesGroup input[type="checkbox"]');
-            for (var i = 0; i < priBoxes.length; i++) {
-                priBoxes[i].checked = userProfile.priorities.indexOf(priBoxes[i].value) !== -1;
-            }
-        }
-    }
-}
 
 function closeOnboarding() {
     document.getElementById('onboardingOverlay').classList.add('hidden');
-    document.getElementById('createProfileBanner').style.display = 'flex';
+    document.getElementById('createProfileBanner').style.display = 'none';
     document.getElementById('profileBanner').style.display = 'none';
 }
 
