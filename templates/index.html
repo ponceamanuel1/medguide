@@ -3025,7 +3025,7 @@ function changeLanguage(lang) {
 
     // Profile Banners
     document.getElementById('profileBannerText').textContent = t.profileSaved;
-    document.getElementById('editProfileBtn').textContent = t.editProfile;
+    if (document.getElementById('editProfileBtn')) document.getElementById('editProfileBtn').textContent = t.editProfile;
     document.getElementById('createProfileText').textContent = t.wantPersonalized;
     document.getElementById('createProfileBtn').textContent = t.createProfile;
     
